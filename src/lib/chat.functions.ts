@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { parseMentions, canDecideApproval } from "@/lib/agents/safeguards";
+import { parseMentions, canDecideApproval, checkApprovalDecision } from "@/lib/agents/safeguards";
 
 async function assertMember(supabase: any, conversationId: string) {
   const { data } = await supabase.from("conversations").select("id, workspace_id").eq("id", conversationId).maybeSingle();
@@ -42,18 +42,28 @@ export const sendMessage = createServerFn({ method: "POST" })
 
 export const decideApproval = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: unknown) => z.object({ approvalId: z.string().uuid(), decision: z.enum(["approved", "rejected"]) }).parse(i))
+  .inputValidator((i: unknown) => z.object({ approvalId: z.string().uuid(), decision: z.enum(["approved", "rejected", "changes_requested"]), note: z.string().max(1000).optional() }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    // RLS: only visible if the human caller is a workspace member.
+    // RLS: only visible if the human caller is a member of the conversation's workspace.
     const { data: ap } = await supabase.from("approvals").select("*").eq("id", data.approvalId).maybeSingle();
     if (!canDecideApproval({ kind: "user", isMember: !!ap })) throw new Error("Not allowed");
-    if (ap!.status !== "pending") throw new Error("Already decided");
+    const { approvalHash, logActivity } = await import("@/lib/agents/router.server");
+    const payload = (ap!.action_payload ?? {}) as Record<string, unknown>;
+    const hash = Object.keys(payload).length ? await approvalHash(payload) : (ap!.action_hash ?? "");
+    const check = checkApprovalDecision(ap!, hash);
+    if (!check.ok) throw new Error(check.reason);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("approvals").update({ status: data.decision, decided_by: userId, decided_at: new Date().toISOString() }).eq("id", ap!.id);
+    // Conditional update makes the decision idempotent: only one caller can move it out of "pending".
+    const { data: updated } = await supabaseAdmin.from("approvals").update({ status: data.decision, decided_by: userId, decided_at: new Date().toISOString(), decision_note: data.note ?? null }).eq("id", ap!.id).eq("status", "pending").select("id");
+    if (!updated?.length) throw new Error("This request was already decided");
+    await supabaseAdmin.from("approval_events").insert({ approval_id: ap!.id, actor_type: "user", actor_id: userId, event_type: data.decision, metadata: { note: data.note ?? null, action_hash: hash } });
     const { data: prof } = await supabase.from("profiles").select("display_name").eq("id", userId).single();
-    const { data: agent } = ap!.agent_id ? await supabaseAdmin.from("agents").select("handle").eq("id", ap!.agent_id).single() : { data: null };
-    const content = `${data.decision === "approved" ? "✅ Approved" : "❌ Rejected"} by ${prof?.display_name ?? "a human"}: **${ap!.action}**${agent ? ` @${agent.handle}` : ""}`;
+    const { data: agent } = ap!.agent_id ? await supabaseAdmin.from("agents").select("handle, name").eq("id", ap!.agent_id).single() : { data: null };
+    const { data: conv } = await supabaseAdmin.from("conversations").select("workspace_id").eq("id", ap!.conversation_id).single();
+    const label = { approved: "✅ Approved", rejected: "❌ Rejected", changes_requested: "✏️ Changes requested" }[data.decision];
+    if (conv) await logActivity(supabaseAdmin, { workspace_id: conv.workspace_id, conversation_id: ap!.conversation_id, agent_id: ap!.agent_id, task_id: ap!.task_id, event_type: `approval_${data.decision}`, summary: `${prof?.display_name ?? "A human"} ${data.decision.replace("_", " ")}: ${ap!.action}` });
+    const content = `${label} by ${prof?.display_name ?? "a human"}: **${ap!.action}**${data.note ? `\n\n${data.note}` : ""}${agent ? ` @${agent.handle}` : ""}`;
     const { data: msg } = await supabaseAdmin.from("messages").insert({ conversation_id: ap!.conversation_id, sender_user_id: userId, kind: "system", content, mentions: ap!.agent_id ? [ap!.agent_id] : [] }).select().single();
     const { enqueueAgentWork } = await import("@/lib/agents/queue.server");
     if (msg) await enqueueAgentWork(supabaseAdmin, msg);

@@ -9,3 +9,13 @@
 - [x] Agents section: list and manage workspace agents
 - [x] Discover Agents page
 - [x] Add Agent flow that tests the connection before marking an agent active
+- [x] Restore handoff database setup in project history; rebuild handoff logic (was missing from code)
+- [x] Task inbox with filters and task details drawer
+- [x] Approvals page: exact-action binding, expiry, request changes, decision history
+- [x] Live activity timeline with filters, details and pause
+- [x] Usage & budgets: estimated USD spend, workspace/agent budgets enforced before runs
+- [ ] Private agent-to-agent threads
+- [ ] Agent contacts & marketplace extras: favourites, categories, profile page, share links, publishing
+- [ ] Agent execution status beside names (working / waiting / failed)
+- [ ] Roles & permissions (owner/admin/member) for approvals and budgets
+- [ ] Budget warning notifications; per-task budgets
