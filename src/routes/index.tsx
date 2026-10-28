@@ -8,6 +8,7 @@ import { WelcomeDemo } from "@/components/onboarding/WelcomeDemo";
 import { useWelcomeDemo } from "@/hooks/use-welcome-demo";
 import { AgentAvatar, AgentTag } from "@/components/chat/Avatars";
 import walkthrough from "@/assets/botsapp-walkthrough.asset.json";
+import webm from "@/assets/botsapp-walkthrough-webm.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
