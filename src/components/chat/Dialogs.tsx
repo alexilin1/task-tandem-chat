@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { createAgent } from "@/lib/chat.functions";
+import { createInvite } from "@/lib/workspace.functions";
 import { AgentAvatar, AgentStatus, AgentTag, providerLabel } from "./Avatars";
 import type { Agent } from "@/hooks/use-chat-data";
 
