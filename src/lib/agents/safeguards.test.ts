@@ -72,3 +72,29 @@ describe("agent job retries", () => {
     expect(jobStatusAfterFailure(3)).toBe("failed");
   });
 });
+
+import { canHandoff, checkBudget, checkApprovalDecision, estimateCostUsd, classifyApprovalAction } from "./safeguards";
+describe("handoffs", () => {
+  const to = { id: "b", status: "online" };
+  it("allows a handoff to another online agent within depth 3", () => expect(canHandoff({ fromId: "a", to, depth: 3 }).ok).toBe(true));
+  it("blocks depth 4", () => expect(canHandoff({ fromId: "a", to, depth: 4 }).ok).toBe(false));
+  it("blocks handing off to itself", () => expect(canHandoff({ fromId: "b", to, depth: 1 }).ok).toBe(false));
+  it("blocks offline receivers", () => expect(canHandoff({ fromId: "a", to: { id: "b", status: "offline" }, depth: 1 }).ok).toBe(false));
+});
+describe("budgets", () => {
+  const b = { monthly_limit_usd: 10, warn_at_percent: 80, hard_limit: true, max_cost_per_run_usd: null };
+  it("allows spend under the limit", () => expect(checkBudget(b, 5, 0.1)).toEqual({ ok: true, warn: false }));
+  it("warns at 80%", () => expect(checkBudget(b, 8, 0.1)).toEqual({ ok: true, warn: true }));
+  it("blocks when the run would exceed a hard limit", () => expect(checkBudget(b, 9.95, 0.1).ok).toBe(false));
+  it("soft limits only warn", () => expect(checkBudget({ ...b, hard_limit: false }, 20, 0.1).ok).toBe(true));
+  it("blocks runs above the per-run cap", () => expect(checkBudget({ ...b, max_cost_per_run_usd: 0.01 }, 0, 0.05).ok).toBe(false));
+  it("estimates cost from tokens", () => expect(estimateCostUsd(1_000_000, 100_000)).toBe(2.25));
+});
+describe("approval decisions", () => {
+  const future = new Date(Date.now() + 60_000).toISOString();
+  it("accepts a pending, unexpired, unchanged request", () => expect(checkApprovalDecision({ status: "pending", expires_at: future, action_hash: "h" }, "h").ok).toBe(true));
+  it("rejects a changed action", () => expect(checkApprovalDecision({ status: "pending", expires_at: future, action_hash: "h" }, "x").ok).toBe(false));
+  it("rejects expired requests", () => expect(checkApprovalDecision({ status: "pending", expires_at: new Date(Date.now() - 1).toISOString(), action_hash: "h" }, "h").ok).toBe(false));
+  it("rejects already-decided requests (no double execution)", () => expect(checkApprovalDecision({ status: "approved", expires_at: future, action_hash: "h" }, "h").ok).toBe(false));
+  it("classifies deploys", () => expect(classifyApprovalAction("Deploy to production")).toBe("deploy"));
+});

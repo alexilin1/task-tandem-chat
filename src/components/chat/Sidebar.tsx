@@ -15,8 +15,15 @@ import {
   Inbox,
   Link2,
   Check,
+  ListChecks,
+  ShieldCheck,
+  Activity,
+  Gauge,
+  ChevronDown,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -274,6 +281,8 @@ export function AppSidebar(props: {
         )}
       </nav>
 
+      <WorkspaceLinks />
+
       <div className="flex shrink-0 items-center gap-3 border-t px-5 py-4">
         <HumanAvatar profile={props.me} size="sm" online />
         <div className="min-w-0 flex-1">
@@ -384,5 +393,36 @@ function ConversationListItem(props: {
         </div>
       </div>
     </button>
+  );
+}
+
+function WorkspaceLinks() {
+  const [open, setOpen] = useState(false);
+  const { data: pending } = useQuery({
+    queryKey: ["pending-approvals-count"],
+    queryFn: async () => (await supabase.from("approvals").select("id", { count: "exact", head: true }).eq("status", "pending").gt("expires_at", new Date().toISOString())).count ?? 0,
+    refetchInterval: 30_000,
+  });
+  const links = [
+    { to: "/tasks", label: "Task inbox", icon: ListChecks },
+    { to: "/approvals", label: "Approvals", icon: ShieldCheck, badge: pending },
+    { to: "/activity", label: "Activity", icon: Activity },
+    { to: "/usage", label: "Usage & budgets", icon: Gauge },
+    { to: "/agents", label: "Manage agents", icon: Bot },
+  ] as const;
+  return (
+    <div className="shrink-0 border-t px-2 py-2">
+      <button onClick={() => setOpen(!open)} className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-[11px] font-medium text-muted-foreground transition-ui hover:bg-hover" aria-expanded={open}>
+        <span className="flex items-center gap-1.5">Workspace{!open && !!pending && <span className="rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">{pending}</span>}</span>
+        <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
+      </button>
+      {open && links.map((l) => (
+        <Link key={l.to} to={l.to} className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[13px] transition-ui hover:bg-hover">
+          <l.icon className="h-4 w-4 text-muted-foreground" />
+          <span className="flex-1">{l.label}</span>
+          {"badge" in l && !!l.badge && <span className="rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">{l.badge}</span>}
+        </Link>
+      ))}
+    </div>
   );
 }

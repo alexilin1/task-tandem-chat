@@ -200,7 +200,7 @@ export function RightPanel(props: {
                     {agents.find((x) => x.id === a.agent_id)?.name ?? "Agent"} ·{" "}
                     {a.status === "pending"
                       ? "waiting for you"
-                      : `${a.status === "approved" ? "Approved" : "Rejected"}${a.decided_at ? ` · ${new Date(a.decided_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}`}
+                      : `${({ approved: "Approved", rejected: "Rejected", changes_requested: "Changes requested", expired: "Expired" } as Record<string, string>)[a.status] ?? a.status}${a.decided_at ? ` · ${new Date(a.decided_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}`}
                   </div>
                   {a.details && (
                     <div className="mt-0.5 line-clamp-2 text-[11px] text-subtle-foreground">
