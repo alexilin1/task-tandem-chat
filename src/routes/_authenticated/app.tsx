@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getLastRead, useAgents, useConversations, useProfiles, useRecentMessages, useWorkspace, type Agent, type Conversation } from "@/hooks/use-chat-data";
+import { getLastRead, getActiveWorkspaceId, setActiveWorkspaceId, useAgents, useConversations, useProfiles, useRecentMessages, useWorkspaces, type Agent, type Conversation } from "@/hooks/use-chat-data";
 import { useTheme } from "@/hooks/use-theme";
 import { AppSidebar, type Preview } from "@/components/chat/Sidebar";
 import { ConversationView } from "@/components/chat/ConversationView";
