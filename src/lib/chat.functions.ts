@@ -35,9 +35,9 @@ export const sendMessage = createServerFn({ method: "POST" })
     await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", data.conversationId);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { routeMessage } = await import("@/lib/agents/router.server");
-    await routeMessage(supabaseAdmin, msg as any);
-    return { id: msg.id };
+    const { enqueueAgentWork } = await import("@/lib/agents/queue.server");
+    await enqueueAgentWork(supabaseAdmin, msg);
+    return { id: msg.id, conversationId: data.conversationId };
   });
 
 export const decideApproval = createServerFn({ method: "POST" })
@@ -55,9 +55,9 @@ export const decideApproval = createServerFn({ method: "POST" })
     const { data: agent } = ap!.agent_id ? await supabaseAdmin.from("agents").select("handle").eq("id", ap!.agent_id).single() : { data: null };
     const content = `${data.decision === "approved" ? "✅ Approved" : "❌ Rejected"} by ${prof?.display_name ?? "a human"}: **${ap!.action}**${agent ? ` @${agent.handle}` : ""}`;
     const { data: msg } = await supabaseAdmin.from("messages").insert({ conversation_id: ap!.conversation_id, sender_user_id: userId, kind: "system", content, mentions: ap!.agent_id ? [ap!.agent_id] : [] }).select().single();
-    const { routeMessage } = await import("@/lib/agents/router.server");
-    if (msg) await routeMessage(supabaseAdmin, msg as any);
-    return { ok: true };
+    const { enqueueAgentWork } = await import("@/lib/agents/queue.server");
+    if (msg) await enqueueAgentWork(supabaseAdmin, msg);
+    return { ok: true, conversationId: ap!.conversation_id };
   });
 
 export const setPaused = createServerFn({ method: "POST" })
@@ -108,4 +108,15 @@ export const createAgent = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("agent_credentials").insert({ agent_id: agent.id, token_hash: await sha256Hex(token), webhook_secret: webhookSecret });
     return { agentId: agent.id, token, webhookSecret };
+  });
+
+/** Runs queued agent work for one conversation the caller belongs to. Called right after sending, separately from the send itself. */
+export const runAgentQueue = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ conversationId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertMember(context.supabase, data.conversationId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { processAgentJobs } = await import("@/lib/agents/queue.server");
+    return processAgentJobs(supabaseAdmin, { limit: 3, conversationId: data.conversationId });
   });

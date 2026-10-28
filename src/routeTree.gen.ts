@@ -18,6 +18,7 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/ap
 import { Route as AuthenticatedJoinRouteImport } from './routes/_authenticated/join'
 import { Route as ApiPublicAgentsMessagesRouteImport } from './routes/api/public/agents/messages'
 import { Route as ApiPublicAgentsTasksRouteImport } from './routes/api/public/agents/tasks'
+import { Route as ApiPublicJobsAgentQueueRouteImport } from './routes/api/public/jobs/agent-queue'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -63,6 +64,11 @@ const ApiPublicAgentsTasksRoute = ApiPublicAgentsTasksRouteImport.update({
   path: '/api/public/agents/tasks',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicJobsAgentQueueRoute = ApiPublicJobsAgentQueueRouteImport.update({
+  id: '/api/public/jobs/agent-queue',
+  path: '/api/public/jobs/agent-queue',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/join': typeof AuthenticatedJoinRoute
   '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
   '/api/public/agents/tasks': typeof ApiPublicAgentsTasksRoute
+  '/api/public/jobs/agent-queue': typeof ApiPublicJobsAgentQueueRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/join': typeof AuthenticatedJoinRoute
   '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
   '/api/public/agents/tasks': typeof ApiPublicAgentsTasksRoute
+  '/api/public/jobs/agent-queue': typeof ApiPublicJobsAgentQueueRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/_authenticated/join': typeof AuthenticatedJoinRoute
   '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
   '/api/public/agents/tasks': typeof ApiPublicAgentsTasksRoute
+  '/api/public/jobs/agent-queue': typeof ApiPublicJobsAgentQueueRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/join'
     | '/api/public/agents/messages'
     | '/api/public/agents/tasks'
+    | '/api/public/jobs/agent-queue'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/join'
     | '/api/public/agents/messages'
     | '/api/public/agents/tasks'
+    | '/api/public/jobs/agent-queue'
   id:
     | '__root__'
     | '/'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/_authenticated/join'
     | '/api/public/agents/messages'
     | '/api/public/agents/tasks'
+    | '/api/public/jobs/agent-queue'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -137,6 +149,7 @@ export interface RootRouteChildren {
   DocsRoute: typeof DocsRoute
   ApiPublicAgentsMessagesRoute: typeof ApiPublicAgentsMessagesRoute
   ApiPublicAgentsTasksRoute: typeof ApiPublicAgentsTasksRoute
+  ApiPublicJobsAgentQueueRoute: typeof ApiPublicJobsAgentQueueRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAgentsTasksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/jobs/agent-queue': {
+      id: '/api/public/jobs/agent-queue'
+      path: '/api/public/jobs/agent-queue'
+      fullPath: '/api/public/jobs/agent-queue'
+      preLoaderRoute: typeof ApiPublicJobsAgentQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -229,6 +249,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocsRoute: DocsRoute,
   ApiPublicAgentsMessagesRoute: ApiPublicAgentsMessagesRoute,
   ApiPublicAgentsTasksRoute: ApiPublicAgentsTasksRoute,
+  ApiPublicJobsAgentQueueRoute: ApiPublicJobsAgentQueueRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
