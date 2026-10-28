@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { checkRunAllowed, parseMentions, normalizeForDuplicate, pickBestAgent } from "./safeguards";
+import { checkRunAllowed, parseMentions, normalizeForDuplicate, pickBestAgent, canReceiveWork } from "./safeguards";
 import { runAgentLLM, pickAgentWithLLM, type AgentOutput } from "./llm.server";
 
 type Admin = SupabaseClient<Database>;
