@@ -22,7 +22,7 @@ export function HandoffStatus({ status }: { status: string }) {
 }
 
 /** Compact inline row shown in the chat stream. */
-export function HandoffRow({ m, handoff, task, agents, onOpen }: { m: Message; handoff?: Handoff; task?: Task; agents: Agent[]; onOpen: () => void }) {
+export function HandoffRow({ m, handoff, task, agents, onOpen }: { m: Message; handoff?: Handoff | undefined; task?: Task | undefined; agents: Agent[]; onOpen: () => void }) {
   const from = agents.find((a) => a.id === handoff?.from_agent_id);
   const to = agents.find((a) => a.id === handoff?.to_agent_id);
   return (
