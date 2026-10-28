@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseMentions, checkRunAllowed, canDecideApproval } from "./safeguards";
+import { parseMentions, checkRunAllowed, canDecideApproval, checkInviteUsable } from "./safeguards";
 
 const agents = [
   { id: "pm", handle: "ProjectManager" },
@@ -25,5 +25,12 @@ describe("safeguards", () => {
     expect(canDecideApproval({ kind: "agent", isMember: true })).toBe(false);
     expect(canDecideApproval({ kind: "user", isMember: true })).toBe(true);
     expect(canDecideApproval({ kind: "user", isMember: false })).toBe(false);
+  });
+  it("invites work only before expiry and under the use limit", () => {
+    const now = new Date("2026-10-28T12:00:00Z");
+    const ok = { expires_at: "2026-11-04T12:00:00Z", uses: 3, max_uses: 25 };
+    expect(checkInviteUsable(ok, now).ok).toBe(true);
+    expect(checkInviteUsable({ ...ok, expires_at: "2026-10-28T11:59:00Z" }, now).ok).toBe(false);
+    expect(checkInviteUsable({ ...ok, uses: 25 }, now).ok).toBe(false);
   });
 });
