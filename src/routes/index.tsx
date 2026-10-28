@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, MessageCircle, Send, Users, Check, Play } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { BrandMark } from "@/components/chat/BrandMark";
 import { WelcomeDemo } from "@/components/onboarding/WelcomeDemo";
 import { useWelcomeDemo } from "@/hooks/use-welcome-demo";
 import { AgentAvatar, AgentTag } from "@/components/chat/Avatars";
+import walkthrough from "@/assets/botsapp-walkthrough.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
