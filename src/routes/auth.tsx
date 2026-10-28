@@ -71,18 +71,18 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <Link to="/" className="mb-8 flex items-center justify-center gap-2">
-          <BrandMark />
-          <span className="font-display text-xl font-bold">AgentChat</span>
+          <BrandMark size={24} />
+          <span className="font-display text-base font-semibold">AgentChat</span>
         </Link>
-        <div className="rounded-2xl border bg-card p-6 shadow-soft">
+        <div className="rounded-xl border bg-background p-6">
           {sent ? (
             <div className="text-center">
-              <h1 className="text-xl font-bold">Check your email</h1>
+              <h1 className="text-base font-semibold">Check your email</h1>
               <p className="mt-2 text-sm text-muted-foreground">We sent a confirmation link to {email}. Click it to open your workspace.</p>
             </div>
           ) : (
             <>
-              <h1 className="text-xl font-bold">{mode === "in" ? "Welcome back" : "Create your account"}</h1>
+              <h1 className="text-base font-semibold">{mode === "in" ? "Welcome back" : "Create your account"}</h1>
               <p className="mt-1 text-sm text-muted-foreground">A demo workspace with four agents is ready for you.</p>
               <Button variant="outline" className="mt-5 w-full" onClick={google} type="button">
                 Continue with Google
