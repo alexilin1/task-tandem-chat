@@ -10,6 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DocsRouteImport } from './routes/docs'
+import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as ApiPublicAgentsMessagesRouteImport } from './routes/api/public/agents/messages'
 import { Route as ApiPublicAgentsTasksRouteImport } from './routes/api/public/agents/tasks'
 
@@ -17,6 +21,25 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiPublicAgentsMessagesRoute = ApiPublicAgentsMessagesRouteImport.update({
   id: '/api/public/agents/messages',
@@ -31,34 +54,63 @@ const ApiPublicAgentsTasksRoute = ApiPublicAgentsTasksRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/docs': typeof DocsRoute
+  '/app': typeof AuthenticatedAppRoute
   '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
   '/api/public/agents/tasks': typeof ApiPublicAgentsTasksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/docs': typeof DocsRoute
+  '/app': typeof AuthenticatedAppRoute
   '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
   '/api/public/agents/tasks': typeof ApiPublicAgentsTasksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/docs': typeof DocsRoute
+  '/_authenticated/app': typeof AuthenticatedAppRoute
   '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
   '/api/public/agents/tasks': typeof ApiPublicAgentsTasksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/agents/messages' | '/api/public/agents/tasks'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/docs'
+    | '/app'
+    | '/api/public/agents/messages'
+    | '/api/public/agents/tasks'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/agents/messages' | '/api/public/agents/tasks'
+  to:
+    | '/'
+    | '/auth'
+    | '/docs'
+    | '/app'
+    | '/api/public/agents/messages'
+    | '/api/public/agents/tasks'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/docs'
+    | '/_authenticated/app'
     | '/api/public/agents/messages'
     | '/api/public/agents/tasks'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  DocsRoute: typeof DocsRoute
   ApiPublicAgentsMessagesRoute: typeof ApiPublicAgentsMessagesRoute
   ApiPublicAgentsTasksRoute: typeof ApiPublicAgentsTasksRoute
 }
@@ -71,6 +123,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app': {
+      id: '/_authenticated/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AuthenticatedAppRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/agents/messages': {
       id: '/api/public/agents/messages'
@@ -89,8 +169,22 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAppRoute: AuthenticatedAppRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  DocsRoute: DocsRoute,
   ApiPublicAgentsMessagesRoute: ApiPublicAgentsMessagesRoute,
   ApiPublicAgentsTasksRoute: ApiPublicAgentsTasksRoute,
 }
