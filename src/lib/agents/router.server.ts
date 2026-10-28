@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { checkRunAllowed, parseMentions, normalizeForDuplicate } from "./safeguards";
-import { runAgentLLM, type AgentOutput } from "./llm.server";
+import { checkRunAllowed, parseMentions, normalizeForDuplicate, pickBestAgent } from "./safeguards";
+import { runAgentLLM, pickAgentWithLLM, type AgentOutput } from "./llm.server";
 
 type Admin = SupabaseClient<Database>;
 type Agent = Database["public"]["Tables"]["agents"]["Row"];
@@ -69,10 +69,25 @@ export async function routeMessage(admin: Admin, start: RouterMessage) {
     .filter((id) => ids.includes(id))
     .map((agentId) => ({ agentId, msg: start }));
 
-  // DMs with a single agent: route every human message to it.
+  // Human message with no @mention: route to the single best-suited agent.
   if (!queue.length && !start.sender_agent_id) {
     const { data: conv } = await admin.from("conversations").select("kind").eq("id", convId).single();
-    if (conv?.kind === "dm" && agents.length === 1 && agents[0]) queue.push({ agentId: agents[0].id, msg: start });
+    if (conv?.kind === "dm" && agents.length === 1 && agents[0]) {
+      queue.push({ agentId: agents[0].id, msg: start });
+    } else if (conv?.kind === "group" && agents.length) {
+      // Keyword heuristic first; when it can't decide (no fit or a tie), ask the LLM to pick one handle.
+      let chosen = pickBestAgent(start.content, agents);
+      if (!chosen) {
+        const roster = agents.map((a) => `@${a.handle} — ${a.name}: ${a.description} (${a.capabilities.join(", ")})`).join("\n");
+        try {
+          const handle = await pickAgentWithLLM(roster, start.content);
+          chosen = agents.find((a) => a.handle.toLowerCase() === (handle ?? "").toLowerCase()) ?? null;
+        } catch {
+          chosen = null; // routing failure stays silent rather than spamming every agent
+        }
+      }
+      if (chosen) queue.push({ agentId: chosen.id, msg: start });
+    }
   }
 
   let runsThisSend = 0;
