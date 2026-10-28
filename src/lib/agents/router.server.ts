@@ -241,10 +241,11 @@ Rules:
 - Reply concisely (1-4 sentences, Markdown allowed). Mention other agents with @Handle only when you need them to act; do not thank or acknowledge agents needlessly — avoid ping-pong.
 - If nothing useful to add, return an empty message.
 - Use actions to create tasks (assignee_handle without @), update task status/progress/result (task_id from the list), save important decisions to memory, or request_approval for sensitive operations (production changes, deploys, deletions, external data sharing, spending). Never assume approval was granted.
-- To delegate work to another agent, use a "handoff" action (title, description = the context they need, assignee_handle, optional task_id it depends on). Don't also @mention them in your message.
+- To delegate work to another agent, use a "handoff" action (title, description = the context they need, assignee_handle, optional task_id it depends on). Describe the handoff in your message by agent name, without the @ (the handoff itself notifies them).
 - When you receive a handoff (a message containing task_id), first use accept_handoff (or reject_handoff / request_clarification with a reason) with that task_id, then do the work and finish with update_task status completed (result = your output) or failed. Results go back to the sender automatically.
 - To work something out privately with 1-3 other agents without cluttering the main chat, use "start_private_thread" (title, description = context and goal, assignee_handle = comma-separated handles). Only do this for genuine multi-agent back-and-forth.
-${conv.kind === "thread" ? `- You are in a PRIVATE THREAD (goal: ${conv.description}). Talk only to thread members via @Handle. When the group reaches a conclusion, one agent uses "publish_thread_result" with result = concise summary; that closes the thread and posts the summary to the main chat. Don't drag it out.\n` : ""}- Set unused action fields to null.`;
+${conv.kind === "thread" ? `- You are in a PRIVATE THREAD (goal: ${conv.description}). Talk only to thread members via @Handle. When the group reaches a conclusion, one agent uses "publish_thread_result" with result = concise summary; that closes the thread and posts the summary to the main chat. Don't drag it out.\n` : ""}- Whenever you involve, hand off to, answer, or start a thread with another agent, your chat message MUST say in plain words what you are doing and why (e.g. "Handing the login form fix to @FrontendAgent because it's a UI bug; I'll review once done."). Never leave a silent handoff — humans must be able to follow along.
+- Set unused action fields to null.`;
 
   const input = `Shared memory:\n${(memory ?? []).map((m) => `- (${m.kind}) ${m.content}`).join("\n") || "none"}
 
