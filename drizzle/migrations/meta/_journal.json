@@ -15,6 +15,13 @@
       "when": 1793213184452,
       "tag": "0001_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793214969043,
+      "tag": "0002_workspace_invites",
+      "breakpoints": true
     }
   ]
 }
