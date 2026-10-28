@@ -30,6 +30,54 @@ export function normalizeForDuplicate(text: string): string {
   return text.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+export interface AgentProfile extends AgentRef {
+  name: string;
+  description: string;
+  capabilities: string[];
+}
+
+function tokens(text: string): Set<string> {
+  return new Set(text.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2));
+}
+
+/**
+ * Scores how well an agent fits a message: capability matches weigh most,
+ * then handle/name, then description words. Returns 0 for no fit.
+ */
+export function scoreAgent(content: string, agent: AgentProfile): number {
+  const words = tokens(content);
+  if (!words.size) return 0;
+  let score = 0;
+  for (const cap of agent.capabilities) {
+    for (const w of tokens(cap)) if (words.has(w)) score += 3;
+  }
+  for (const w of tokens(`${agent.handle} ${agent.name}`)) if (words.has(w)) score += 2;
+  for (const w of tokens(agent.description)) if (words.has(w)) score += 1;
+  return score;
+}
+
+/**
+ * Picks the single best-suited agent for an unmentioned message.
+ * Returns null when no agent scores (caller may fall back to an LLM pick)
+ * or when the top score is tied (ambiguous — let the LLM decide).
+ */
+export function pickBestAgent<T extends AgentProfile>(content: string, agents: T[]): T | null {
+  let best: T | null = null;
+  let bestScore = 0;
+  let tied = false;
+  for (const a of agents) {
+    const s = scoreAgent(content, a);
+    if (s > bestScore) {
+      best = a;
+      bestScore = s;
+      tied = false;
+    } else if (s === bestScore && s > 0) {
+      tied = true;
+    }
+  }
+  return tied ? null : best;
+}
+
 export type RunBlock =
   | { ok: true }
   | { ok: false; reason: string; pause: boolean };
