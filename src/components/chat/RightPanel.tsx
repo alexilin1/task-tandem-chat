@@ -1,26 +1,26 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Pause, Play, Plus, Trash2, Paperclip } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Pause, Play, Plus, X, FileText, Circle, CircleDot, CircleCheck, CircleX, CircleDashed, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { setPaused } from "@/lib/chat.functions";
 import { cn } from "@/lib/utils";
-import { AgentAvatar, AgentBadge, HumanAvatar, statusLabel } from "./Avatars";
+import { AgentAvatar, AgentStatus, AgentTag, HumanAvatar, providerLabel } from "./Avatars";
 import { useConversationData, type Agent, type Conversation, type Profile } from "@/hooks/use-chat-data";
-import { useQueryClient } from "@tanstack/react-query";
 
-const statusStyle: Record<string, string> = {
-  pending: "bg-muted text-muted-foreground",
-  running: "bg-accent text-accent-foreground",
-  waiting_input: "bg-warning/25 text-warning-foreground",
-  completed: "bg-success/20 text-success",
-  failed: "bg-destructive/15 text-destructive",
-};
+const taskIcon = {
+  pending: [Circle, "text-subtle-foreground", "Pending"],
+  running: [CircleDot, "text-primary", "Working"],
+  waiting_input: [CircleDashed, "text-warning", "Waiting"],
+  completed: [CircleCheck, "text-success", "Completed"],
+  failed: [CircleX, "text-destructive", "Failed"],
+} as const;
 
-export function RightPanel(props: { conv: Conversation; agents: Agent[]; profiles: Profile[]; myId: string }) {
+export function RightPanel(props: { conv: Conversation; agents: Agent[]; profiles: Profile[]; myId: string; onClose: () => void; onOpenAgent: (a: Agent) => void; className?: string }) {
   const { conv, agents, profiles, myId } = props;
   const data = useConversationData(conv.id);
   const qc = useQueryClient();
@@ -31,11 +31,14 @@ export function RightPanel(props: { conv: Conversation; agents: Agent[]; profile
   const humans = parts.filter((p) => p.user_id);
   const others = agents.filter((a) => !convAgents.includes(a));
   const files = (data.messages.data ?? []).filter((m) => m.attachment);
-  const pending = (data.approvals.data ?? []).filter((a) => a.status === "pending").length;
+  const tasks = data.tasks.data ?? [];
+  const activeTasks = tasks.filter((t) => t.status !== "completed");
+  const doneTasks = tasks.filter((t) => t.status === "completed");
+  const recent = (data.messages.data ?? []).filter((m) => m.kind === "task_event" || m.kind === "system").slice(-6).reverse();
 
   async function addAgent(id: string) {
     const { error } = await supabase.from("conversation_participants").insert({ conversation_id: conv.id, agent_id: id });
-    if (error) toast.error(error.message);
+    if (error) toast.error("Couldn't add agent");
     qc.invalidateQueries({ queryKey: ["conversations"] });
   }
   async function removeAgent(id: string) {
@@ -44,120 +47,154 @@ export function RightPanel(props: { conv: Conversation; agents: Agent[]; profile
   }
   async function addNote() {
     if (!note.trim()) return;
-    await supabase.from("conversation_memory").insert({ conversation_id: conv.id, content: note.trim(), kind: "note", created_by_user_id: myId });
+    const { error } = await supabase.from("conversation_memory").insert({ conversation_id: conv.id, content: note.trim(), kind: "note", created_by_user_id: myId });
+    if (error) return void toast.error("Couldn't save note");
     setNote("");
     qc.invalidateQueries({ queryKey: ["conv", conv.id, "memory"] });
   }
 
   return (
-    <aside className="flex h-full w-80 shrink-0 flex-col overflow-y-auto border-l bg-sidebar">
-      <div className="space-y-6 p-4">
-        <div className="rounded-2xl border bg-card p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm font-semibold">Agent activity</div>
-              <div className="text-xs text-muted-foreground">{conv.paused ? "Paused" : "Running"} · max depth {conv.max_depth}{pending ? ` · ${pending} approval pending` : ""}</div>
-            </div>
-            <Button size="sm" variant={conv.paused ? "default" : "outline"} onClick={() => pause({ data: { conversationId: conv.id, paused: !conv.paused } })}>
-              {conv.paused ? <><Play className="h-3.5 w-3.5" />Resume</> : <><Pause className="h-3.5 w-3.5" />Stop</>}
+    <aside className={cn("flex h-full flex-col border-l bg-background", props.className)}>
+      <div className="flex h-14 shrink-0 items-center gap-2 border-b px-3">
+        <Button size="icon" variant="ghost" className="h-9 w-9 md:hidden" onClick={props.onClose} aria-label="Back"><ChevronLeft className="h-5 w-5" /></Button>
+        <span className="flex-1 text-sm font-semibold">Details</span>
+        <Button size="icon" variant="ghost" className="hidden h-8 w-8 md:inline-flex" onClick={props.onClose} aria-label="Close details"><X className="h-4 w-4" /></Button>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        <Section title="Agent activity">
+          <div className="flex items-center gap-2 px-4">
+            <span className={cn("h-1.5 w-1.5 rounded-full", conv.paused ? "bg-warning" : "bg-success")} />
+            <span className="flex-1 text-[13px]">{conv.paused ? "Paused" : "Running"} <span className="text-muted-foreground">· max depth {conv.max_depth}</span></span>
+            <Button size="sm" variant="outline" className="h-7" onClick={() => pause({ data: { conversationId: conv.id, paused: !conv.paused } })}>
+              {conv.paused ? <><Play className="h-3.5 w-3.5" />Resume</> : <><Pause className="h-3.5 w-3.5" />Pause</>}
             </Button>
           </div>
-        </div>
+          {recent.length > 0 && (
+            <ul className="mt-2 space-y-1 px-4">
+              {recent.map((m) => (
+                <li key={m.id} className="truncate text-xs text-muted-foreground">{m.content.replace(/\*\*/g, "")}</li>
+              ))}
+            </ul>
+          )}
+        </Section>
 
-        <Block title={`Tasks (${data.tasks.data?.length ?? 0})`}>
-          {(data.tasks.data ?? []).map((t) => {
-            const a = agents.find((x) => x.id === t.assigned_agent_id);
-            return (
-              <div key={t.id} className="rounded-xl border bg-card p-2.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="text-sm font-medium leading-tight">{t.title}</div>
-                  <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold", statusStyle[t.status])}>{t.status.replace("_", " ")}</span>
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground">{a ? `${a.avatar_emoji} ${a.name}` : "Unassigned"}{t.is_demo ? " · demo" : ""}</div>
-                <Progress value={t.progress} className="mt-2 h-1.5" />
-                {t.result && <div className="mt-1.5 line-clamp-3 text-xs">{t.result}</div>}
-              </div>
-            );
-          })}
-          {!data.tasks.data?.length && <Muted>Agents will create tasks as they work.</Muted>}
-        </Block>
+        <Section title="Tasks" count={activeTasks.length}>
+          {activeTasks.map((t) => <TaskRow key={t.id} t={t} agent={agents.find((a) => a.id === t.assigned_agent_id)} />)}
+          {doneTasks.map((t) => <TaskRow key={t.id} t={t} agent={agents.find((a) => a.id === t.assigned_agent_id)} />)}
+          {!tasks.length && <Empty>Tasks appear here when agents start work.</Empty>}
+        </Section>
 
-        <Block title={`Agents (${convAgents.length})`}>
+        <Section
+          title="Agents"
+          count={convAgents.length}
+          action={
+            others.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="h-6 w-6" aria-label="Add agent"><Plus className="h-3.5 w-3.5" /></Button></DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {others.map((a) => <DropdownMenuItem key={a.id} onSelect={() => addAgent(a.id)}><AgentAvatar agent={a} size="xs" />{a.name}</DropdownMenuItem>)}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )
+          }
+        >
           {convAgents.map((a) => {
             const act = parts.find((p) => p.agent_id === a.id)?.activity;
             return (
-              <div key={a.id} className="group flex items-start gap-2.5 rounded-xl p-1.5 hover:bg-sidebar-accent">
-                <AgentAvatar agent={a} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 text-sm font-medium">{a.name} <AgentBadge /></div>
-                  <div className="text-xs text-muted-foreground">{act ? <span className="text-agent">{act}</span> : `${statusLabel(a.status)} · ${a.provider}`}</div>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {a.capabilities.map((c) => <span key={c} className="rounded bg-secondary px-1.5 text-[10px] text-secondary-foreground">{c}</span>)}
+              <div key={a.id} className="group flex items-center gap-2.5 px-4 py-1.5 transition-ui hover:bg-hover">
+                <button className="flex min-w-0 flex-1 items-center gap-2.5 text-left" onClick={() => props.onOpenAgent(a)}>
+                  <AgentAvatar agent={a} size="sm" showStatus={false} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 text-[13px] font-medium"><span className="truncate">{a.name}</span><AgentTag /></div>
+                    <div className="truncate text-[11px] text-muted-foreground">{a.capabilities.join(", ") || providerLabel[a.provider]}</div>
                   </div>
-                </div>
-                <button className="opacity-0 group-hover:opacity-100" onClick={() => removeAgent(a.id)} title="Remove"><Trash2 className="h-3.5 w-3.5 text-muted-foreground" /></button>
+                </button>
+                <AgentStatus status={a.status} activity={act} />
+                <button className="text-muted-foreground opacity-0 transition-ui hover:text-foreground group-hover:opacity-100" onClick={() => removeAgent(a.id)} aria-label={`Remove ${a.name}`}><X className="h-3.5 w-3.5" /></button>
               </div>
             );
           })}
-          {others.length > 0 && (
-            <div className="flex flex-wrap gap-1 pt-1">
-              {others.map((a) => (
-                <Button key={a.id} size="sm" variant="outline" className="h-7 text-xs" onClick={() => addAgent(a.id)}><Plus className="h-3 w-3" />{a.name}</Button>
-              ))}
-            </div>
-          )}
-        </Block>
+          {!convAgents.length && <Empty>No agents in this conversation.</Empty>}
+        </Section>
 
-        <Block title={`Humans (${humans.length})`}>
+        <Section title="People" count={humans.length}>
           {humans.map((h) => {
             const p = profiles.find((x) => x.id === h.user_id);
             return (
-              <div key={h.id} className="flex items-center gap-2.5 p-1.5">
+              <div key={h.id} className="flex items-center gap-2.5 px-4 py-1.5">
                 <HumanAvatar profile={p} size="sm" online={h.user_id === myId} />
-                <span className="text-sm">{p?.display_name}{h.user_id === myId ? " (you)" : ""}</span>
+                <span className="text-[13px]">{p?.display_name}{h.user_id === myId && <span className="text-muted-foreground"> (you)</span>}</span>
               </div>
             );
           })}
-        </Block>
+        </Section>
 
-        <Block title="Shared memory">
+        <Section title="Shared context" count={data.memory.data?.length ?? 0}>
           {(data.memory.data ?? []).map((m) => (
-            <div key={m.id} className="group flex gap-2 rounded-lg bg-card p-2 text-xs">
-              <span className="font-semibold capitalize text-agent">{m.kind}</span>
+            <div key={m.id} className="group flex gap-2 px-4 py-1 text-[13px]">
+              <span className="w-16 shrink-0 text-[11px] capitalize leading-5 text-muted-foreground">{m.kind}</span>
               <span className="flex-1">{m.content}</span>
-              <button className="opacity-0 group-hover:opacity-100" onClick={async () => { await supabase.from("conversation_memory").delete().eq("id", m.id); qc.invalidateQueries({ queryKey: ["conv", conv.id, "memory"] }); }}><Trash2 className="h-3 w-3" /></button>
+              <button
+                className="text-muted-foreground opacity-0 transition-ui hover:text-foreground group-hover:opacity-100"
+                aria-label="Delete note"
+                onClick={async () => { await supabase.from("conversation_memory").delete().eq("id", m.id); qc.invalidateQueries({ queryKey: ["conv", conv.id, "memory"] }); }}
+              ><X className="h-3.5 w-3.5" /></button>
             </div>
           ))}
-          <div className="flex gap-1.5">
-            <Input value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addNote()} placeholder="Add project context…" className="h-8 text-xs" />
-            <Button size="sm" className="h-8" onClick={addNote}>Add</Button>
+          <div className="px-4 pt-1">
+            <Input value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addNote()} placeholder="Add a decision or note, press Enter" className="h-8 text-[13px]" />
           </div>
-        </Block>
+        </Section>
 
-        <Block title={`Shared files (${files.length})`}>
+        <Section title="Files" count={files.length}>
           {files.map((m) => {
             const a = m.attachment as { name: string; path: string };
             return (
-              <button key={m.id} className="flex w-full items-center gap-2 rounded-lg p-1.5 text-left text-xs hover:bg-sidebar-accent" onClick={async () => { const { data: s } = await supabase.storage.from("attachments").createSignedUrl(a.path, 300); if (s) window.open(s.signedUrl, "_blank", "noopener"); }}>
-                <Paperclip className="h-3.5 w-3.5" /> <span className="truncate">{a.name}</span>
+              <button
+                key={m.id}
+                className="flex w-full items-center gap-2.5 px-4 py-1.5 text-left text-[13px] transition-ui hover:bg-hover"
+                onClick={async () => {
+                  const { data: s } = await supabase.storage.from("attachments").createSignedUrl(a.path, 300);
+                  if (s) window.open(s.signedUrl, "_blank", "noopener");
+                  else toast.error("Couldn't open file");
+                }}
+              >
+                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" /><span className="truncate">{a.name}</span>
               </button>
             );
           })}
-          {!files.length && <Muted>No files shared yet.</Muted>}
-        </Block>
+          {!files.length && <Empty>No files shared yet.</Empty>}
+        </Section>
       </div>
     </aside>
   );
 }
 
-function Block({ title, children }: { title: string; children: React.ReactNode }) {
+function TaskRow({ t, agent }: { t: { id: string; title: string; status: string; progress: number; is_demo: boolean }; agent?: Agent | undefined }) {
+  const [Icon, color, label] = taskIcon[t.status as keyof typeof taskIcon] ?? taskIcon.pending;
   return (
-    <div>
-      <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</div>
-      <div className="space-y-1.5">{children}</div>
+    <div className="flex items-start gap-2.5 px-4 py-1.5" title={label}>
+      <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", color)} />
+      <div className="min-w-0 flex-1">
+        <div className={cn("truncate text-[13px]", t.status === "completed" && "text-muted-foreground line-through decoration-border")}>{t.title}</div>
+        <div className="text-[11px] text-muted-foreground">{agent?.name ?? "Unassigned"} · {label}{t.status === "running" ? ` ${t.progress}%` : ""}{t.is_demo ? " · demo" : ""}</div>
+      </div>
     </div>
   );
 }
-function Muted({ children }: { children: React.ReactNode }) {
-  return <div className="text-xs text-muted-foreground">{children}</div>;
+
+function Section({ title, count, action, children }: { title: string; count?: number; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="border-b py-3 last:border-b-0">
+      <div className="mb-1.5 flex h-6 items-center gap-1.5 px-4">
+        <h2 className="text-[11px] font-medium text-muted-foreground">{title}</h2>
+        {count !== undefined && <span className="text-[11px] text-subtle-foreground">{count}</span>}
+        <div className="ml-auto">{action}</div>
+      </div>
+      {children}
+    </section>
+  );
+}
+function Empty({ children }: { children: React.ReactNode }) {
+  return <div className="px-4 py-1 text-xs text-subtle-foreground">{children}</div>;
 }
