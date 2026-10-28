@@ -183,8 +183,16 @@ function Landing() {
             <p className="text-xs text-muted-foreground">
               A real walkthrough: sign up, chat, handoffs, tasks, approvals and budgets.
             </p>
-            <Button size="sm" variant="outline" className="rounded-full" onClick={tour.show} asChild>
-              <Link to="/auth">Try it live <ArrowUpRight className="h-3.5 w-3.5" /></Link>
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-full"
+              onClick={() => {
+                setVideoOpen(false);
+                tour.show();
+              }}
+            >
+              Try the interactive demo <ArrowUpRight className="h-3.5 w-3.5" />
             </Button>
           </div>
         </DialogContent>
