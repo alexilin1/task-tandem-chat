@@ -14,8 +14,15 @@ import {
   Inbox,
   Link2,
   Check,
+  ListChecks,
+  ShieldCheck,
+  Activity,
+  Gauge,
+  ChevronDown,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
