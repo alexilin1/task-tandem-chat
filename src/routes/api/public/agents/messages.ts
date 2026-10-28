@@ -34,13 +34,14 @@ export const Route = createFileRoute("/api/public/agents/messages")({
         if (!(await agentInConversation(ctx.admin, ctx.agent.id, b.conversation_id))) return json({ error: "Forbidden" }, 403);
         const { data: parts } = await ctx.admin.from("conversation_participants").select("agent_id").eq("conversation_id", b.conversation_id).not("agent_id", "is", null);
         const { data: agents } = await ctx.admin.from("agents").select("*").in("id", (parts ?? []).map((p: any) => p.agent_id));
-        const { insertAgentMessage, routeMessage } = await import("@/lib/agents/router.server");
+        const { insertAgentMessage } = await import("@/lib/agents/router.server");
         const msg = await insertAgentMessage(ctx.admin, agents ?? [], ctx.agent, b.conversation_id, b.content, {
           depth: b.depth ?? 0,
           correlation_id: b.correlation_id ?? crypto.randomUUID(),
         });
         if (!msg) return json({ error: "Failed" }, 500);
-        await routeMessage(ctx.admin, msg);
+        const { enqueueAgentWork } = await import("@/lib/agents/queue.server");
+        await enqueueAgentWork(ctx.admin, msg);
         return json({ message: msg }, 201);
       },
     },

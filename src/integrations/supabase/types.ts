@@ -146,6 +146,57 @@ export type Database = {
           },
         ]
       }
+      agent_jobs: {
+        Row: {
+          attempts: number
+          conversation_id: string
+          created_at: string
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          message_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          conversation_id: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          message_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          message_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_jobs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_jobs_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: true
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_runs: {
         Row: {
           agent_id: string | null
@@ -787,6 +838,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_agent_jobs: {
+        Args: { _conversation_id?: string; _limit: number }
+        Returns: {
+          attempts: number
+          conversation_id: string
+          created_at: string
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          message_id: string
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "agent_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       is_conv_member: { Args: { _conv: string }; Returns: boolean }
       is_ws_member: { Args: { _ws: string }; Returns: boolean }
     }

@@ -25,7 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { decideApproval, setPaused } from "@/lib/chat.functions";
+import { decideApproval, runAgentQueue, setPaused } from "@/lib/chat.functions";
 import { cn } from "@/lib/utils";
 import { AgentAvatar, AgentStatus, AgentTag, HumanAvatar, providerLabel } from "./Avatars";
 import {
@@ -57,6 +57,7 @@ export function RightPanel(props: {
   const qc = useQueryClient();
   const pause = useServerFn(setPaused);
   const decide = useServerFn(decideApproval);
+  const runQueue = useServerFn(runAgentQueue);
   const [note, setNote] = useState("");
   const parts = data.participants.data ?? [];
   const convAgents = agents.filter((a) => parts.some((p) => p.agent_id === a.id));
@@ -82,6 +83,7 @@ export function RightPanel(props: {
     try {
       await decide({ data: { approvalId: id, decision } });
       qc.invalidateQueries({ queryKey: ["conv", conv.id, "approvals"] });
+      runQueue({ data: { conversationId: conv.id } }).catch((err) => console.error("Agent queue run failed; the scheduled sweep will retry", err));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't record your decision");
     }

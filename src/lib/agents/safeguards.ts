@@ -130,3 +130,10 @@ export function canReceiveWork(agent: { status: string }): boolean {
 export function statusAfterAgentCall(current: string): string {
   return current === "offline" ? "offline" : "online";
 }
+
+export const MAX_JOB_ATTEMPTS = 3;
+
+/** After a failed attempt a job is retried until it has used all its attempts. */
+export function jobStatusAfterFailure(attempts: number): "pending" | "failed" {
+  return attempts >= MAX_JOB_ATTEMPTS ? "failed" : "pending";
+}

@@ -29,6 +29,13 @@
       "when": 1793215940874,
       "tag": "0003_restrict_profiles_read",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793217521431,
+      "tag": "0004_agent_job_queue",
+      "breakpoints": true
     }
   ]
 }
