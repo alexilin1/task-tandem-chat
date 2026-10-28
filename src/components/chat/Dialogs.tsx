@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { createAgent } from "@/lib/chat.functions";
+import { testAgentConnection } from "@/lib/agents.functions";
 import { createInvite } from "@/lib/workspace.functions";
 import { AgentAvatar, AgentStatus, AgentTag, providerLabel } from "./Avatars";
 import type { Agent } from "@/hooks/use-chat-data";
@@ -75,7 +76,7 @@ const PERMS = [
   { id: "request_approval", label: "Request approvals" },
 ] as const;
 
-export function AddAgentDialog(props: { open: boolean; onOpenChange: (o: boolean) => void; workspaceId: string }) {
+export function AddAgentDialog(props: { open: boolean; onOpenChange: (o: boolean) => void; workspaceId: string; onCreated?: () => void }) {
   const create = useServerFn(createAgent);
   const [provider, setProvider] = useState<"builtin" | "webhook" | "rest">("builtin");
   const [name, setName] = useState("");
@@ -87,10 +88,20 @@ export function AddAgentDialog(props: { open: boolean; onOpenChange: (o: boolean
   const [perms, setPerms] = useState<string[]>(["read_history", "create_tasks", "request_approval"]);
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
-  const [creds, setCreds] = useState<{ token: string; webhookSecret: string } | null>(null);
+  const [creds, setCreds] = useState<{ agentId: string; token: string; webhookSecret: string } | null>(null);
+  const test = useServerFn(testAgentConnection);
+  const [testResult, setTestResult] = useState<{ ok: boolean; detail: string } | null>(null);
+  const [testing, setTesting] = useState(false);
+  async function runTest() {
+    if (!creds) return;
+    setTesting(true);
+    try { setTestResult(await test({ data: { agentId: creds.agentId } })); }
+    catch (e) { setTestResult({ ok: false, detail: e instanceof Error ? e.message : "Test failed" }); }
+    finally { setTesting(false); }
+  }
 
   function reset() {
-    setName(""); setHandle(""); setDescription(""); setCaps(""); setPrompt(""); setUrl(""); setCreds(null); setProvider("builtin");
+    setName(""); setHandle(""); setDescription(""); setCaps(""); setPrompt(""); setUrl(""); setCreds(null); setTestResult(null); setProvider("builtin");
   }
 
   async function submit() {
@@ -103,7 +114,8 @@ export function AddAgentDialog(props: { open: boolean; onOpenChange: (o: boolean
           avatarEmoji: "", color, permissions: perms as any, webhookUrl: provider === "webhook" ? url : null,
         },
       });
-      if (r.token) setCreds({ token: r.token, webhookSecret: r.webhookSecret! });
+      props.onCreated?.();
+      if (r.token) setCreds({ agentId: r.agentId, token: r.token, webhookSecret: r.webhookSecret! });
       else { toast.success(`${name} is ready`); reset(); props.onOpenChange(false); }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -124,7 +136,15 @@ export function AddAgentDialog(props: { open: boolean; onOpenChange: (o: boolean
             <Secret label="API token (Bearer)" value={creds.token} />
             {provider === "webhook" && <Secret label="Webhook signing secret (HMAC-SHA256, header X-AgentChat-Signature)" value={creds.webhookSecret} />}
             <a href="/docs" target="_blank" className="text-sm text-primary underline">Read the API docs</a>
-            <DialogFooter><Button onClick={() => { reset(); props.onOpenChange(false); }}>Done</Button></DialogFooter>
+            <div className="rounded-lg border border-border p-3 text-[13px]">
+              <div className="font-medium">Test the connection</div>
+              <p className="mt-0.5 text-muted-foreground">{provider === "webhook" ? "We send a signed test ping to your webhook. It must answer with a success code." : "Make one API call with the token above, then run the test."} The agent only gets work after a test passes.</p>
+              {testResult && <p className={cn("mt-2", testResult.ok ? "text-success" : "text-destructive")}>{testResult.ok ? "Connected — " : "Not connected — "}{testResult.detail}</p>}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { reset(); props.onOpenChange(false); }}>{testResult?.ok ? "Done" : "Finish later"}</Button>
+              <Button onClick={runTest} disabled={testing}>{testing ? "Testing…" : "Test connection"}</Button>
+            </DialogFooter>
           </div>
         ) : (
           <div className="space-y-3">

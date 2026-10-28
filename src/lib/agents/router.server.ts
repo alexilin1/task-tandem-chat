@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { checkRunAllowed, parseMentions, normalizeForDuplicate, pickBestAgent } from "./safeguards";
+import { checkRunAllowed, parseMentions, normalizeForDuplicate, pickBestAgent, canReceiveWork } from "./safeguards";
 import { runAgentLLM, pickAgentWithLLM, type AgentOutput } from "./llm.server";
 
 type Admin = SupabaseClient<Database>;
@@ -17,7 +17,7 @@ export interface RouterMessage {
   sender_agent_id: string | null;
 }
 
-async function hmacHex(secret: string, body: string) {
+export async function hmacHex(secret: string, body: string) {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -61,10 +61,11 @@ export async function insertAgentMessage(
 export async function routeMessage(admin: Admin, start: RouterMessage) {
   const convId = start.conversation_id;
   const { data: parts } = await admin.from("conversation_participants").select("agent_id").eq("conversation_id", convId).not("agent_id", "is", null);
-  const ids = (parts ?? []).map((p) => p.agent_id!) ;
+  const ids = (parts ?? []).map((p) => p.agent_id!);
   if (!ids.length) return;
   const { data: agentRows } = await admin.from("agents").select("*").in("id", ids);
-  const agents = (agentRows ?? []) as Agent[];
+  const agents = ((agentRows ?? []) as Agent[]).filter(canReceiveWork);
+  if (!agents.length) return;
   const queue: Array<{ agentId: string; msg: RouterMessage }> = start.mentions
     .filter((id) => ids.includes(id))
     .map((agentId) => ({ agentId, msg: start }));

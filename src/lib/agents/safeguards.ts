@@ -120,3 +120,13 @@ export function checkInviteUsable(invite: { expires_at: string; uses: number; ma
   if (invite.uses >= invite.max_uses) return { ok: false, reason: "This invite link has reached its use limit" };
   return { ok: true };
 }
+
+/** Only agents that are switched on and have passed a connection check get routed work. */
+export function canReceiveWork(agent: { status: string }): boolean {
+  return agent.status === "online";
+}
+
+/** An API call from an outside agent marks it online, unless a human switched it off. */
+export function statusAfterAgentCall(current: string): string {
+  return current === "offline" ? "offline" : "online";
+}

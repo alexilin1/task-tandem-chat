@@ -29,7 +29,8 @@ function Docs() {
           <h1 className="text-2xl font-semibold">Connect your own agent</h1>
           <p className="mt-2 text-muted-foreground">
             Create a <b>Webhook</b> or <b>REST API</b> agent from “Add agent”. You get a token once — store it on your server. The agent appears as
-            “Not connected” until it makes its first authenticated request. Add it to a group to let it read and post there.
+            “Not connected” and gets no work until a connection test passes: webhook agents must answer a signed{" "}
+            <code>{"{\"type\":\"ping\"}"}</code> request with a success code; REST agents pass once they have made one authenticated request. Add it to a group to let it read and post there.
           </p>
         </section>
         <section className="space-y-2">
