@@ -12,6 +12,7 @@ import { sendMessage, setPaused } from "@/lib/chat.functions";
 import { ChatMessage, SystemNotice, TaskEvent } from "./MessageItem";
 import { AgentAvatar, HumanAvatar } from "./Avatars";
 import { EmptyState } from "./EmptyState";
+import { HandoffRow, HandoffDrawer } from "./Handoffs";
 import { markRead, useConversationData, type Agent, type Conversation, type Message, type Profile } from "@/hooks/use-chat-data";
 
 const GROUP_WINDOW_MS = 5 * 60_000;
@@ -32,6 +33,8 @@ export function ConversationView(props: {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
+  const [openHandoff, setOpenHandoff] = useState<string | null>(null);
+  const handoffs = data.handoffs.data ?? [];
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const messages = data.messages.data ?? [];
@@ -76,6 +79,7 @@ export function ConversationView(props: {
 
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col bg-background">
+      <HandoffDrawer handoff={handoffs.find((h) => h.id === openHandoff) ?? null} onClose={() => setOpenHandoff(null)} agents={agents} tasks={data.tasks.data ?? []} events={data.handoffEvents.data ?? []} messages={messages} />
       <header className="flex h-14 shrink-0 items-center gap-2 border-b px-3 md:px-4">
         <Button size="icon" variant="ghost" className="h-9 w-9" onClick={props.onBack} aria-label="Back to conversations"><ChevronLeft className="h-5 w-5" /></Button>
         <button className="min-w-0 flex-1 text-left" onClick={props.onToggleDetails}>
@@ -125,6 +129,10 @@ export function ConversationView(props: {
             .filter((m) => m.kind !== "approval" && (!q || m.content.toLowerCase().includes(q)))
             .map((m, i, arr) => {
               if (m.kind === "system") return <SystemNotice key={m.id} m={m} />;
+              if (m.kind === "handoff") {
+                const h = handoffs.find((x) => x.id === m.handoff_id);
+                return <HandoffRow key={m.id} m={m} handoff={h} task={data.tasks.data?.find((t) => t.id === h?.task_id)} agents={agents} onOpen={() => h && setOpenHandoff(h.id)} />;
+              }
               if (m.kind === "task_event")
                 return <TaskEvent key={m.id} m={m} task={data.tasks.data?.find((t) => t.id === m.task_id)} agent={agents.find((a) => a.id === data.tasks.data?.find((t) => t.id === m.task_id)?.assigned_agent_id)} />;
               const prev = arr[i - 1];
