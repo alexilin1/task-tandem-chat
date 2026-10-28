@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { sendMessage, setPaused } from "@/lib/chat.functions";
+import { runAgentQueue, sendMessage, setPaused } from "@/lib/chat.functions";
 import { ChatMessage, SystemNotice, TaskEvent } from "./MessageItem";
 import { AgentAvatar, HumanAvatar } from "./Avatars";
 import { EmptyState } from "./EmptyState";
@@ -365,6 +365,7 @@ export function MessageComposer(props: {
 }) {
   const { conv, agents } = props;
   const send = useServerFn(sendMessage);
+  const runQueue = useServerFn(runAgentQueue);
   const qc = useQueryClient();
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -428,6 +429,8 @@ export function MessageComposer(props: {
       });
       setTimeout(() => qc.invalidateQueries({ queryKey: ["conv", conv.id, "messages"] }), 300);
       await p;
+      // Agent replies run as a separate request; the send itself is already done.
+      runQueue({ data: { conversationId: conv.id } }).catch((err) => console.error("Agent queue run failed; the scheduled sweep will retry", err));
     } catch (e) {
       setText(content);
       toast.error(e instanceof Error ? e.message : "Message not sent. Try again.");
