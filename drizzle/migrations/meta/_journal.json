@@ -43,6 +43,13 @@
       "when": 1793217943142,
       "tag": "0005_inbox_approvals_activity_budgets",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793218487297,
+      "tag": "0006_private_agent_threads",
+      "breakpoints": true
     }
   ]
 }

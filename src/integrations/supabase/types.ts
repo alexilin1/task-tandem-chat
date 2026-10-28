@@ -670,8 +670,12 @@ export type Database = {
           id: string
           kind: string
           max_depth: number
+          parent_conversation_id: string | null
           pause_reason: string | null
           paused: boolean
+          started_by_agent_id: string | null
+          thread_result: string | null
+          thread_status: string
           title: string
           updated_at: string
           workspace_id: string
@@ -683,8 +687,12 @@ export type Database = {
           id?: string
           kind?: string
           max_depth?: number
+          parent_conversation_id?: string | null
           pause_reason?: string | null
           paused?: boolean
+          started_by_agent_id?: string | null
+          thread_result?: string | null
+          thread_status?: string
           title: string
           updated_at?: string
           workspace_id: string
@@ -696,13 +704,31 @@ export type Database = {
           id?: string
           kind?: string
           max_depth?: number
+          parent_conversation_id?: string | null
           pause_reason?: string | null
           paused?: boolean
+          started_by_agent_id?: string | null
+          thread_result?: string | null
+          thread_status?: string
           title?: string
           updated_at?: string
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "conversations_parent_conversation_id_fkey"
+            columns: ["parent_conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_started_by_agent_id_fkey"
+            columns: ["started_by_agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversations_workspace_id_fkey"
             columns: ["workspace_id"]
@@ -768,6 +794,7 @@ export type Database = {
           sender_agent_id: string | null
           sender_user_id: string | null
           task_id: string | null
+          thread_id: string | null
         }
         Insert: {
           approval_id?: string | null
@@ -786,6 +813,7 @@ export type Database = {
           sender_agent_id?: string | null
           sender_user_id?: string | null
           task_id?: string | null
+          thread_id?: string | null
         }
         Update: {
           approval_id?: string | null
@@ -804,6 +832,7 @@ export type Database = {
           sender_agent_id?: string | null
           sender_user_id?: string | null
           task_id?: string | null
+          thread_id?: string | null
         }
         Relationships: [
           {
@@ -839,6 +868,13 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
