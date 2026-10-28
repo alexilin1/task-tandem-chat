@@ -151,3 +151,47 @@ export function useConversationData(conversationId?: string) {
   });
   return { messages, participants, tasks, approvals, memory, reactions };
 }
+
+/** Most recent messages across the given conversations, for sidebar previews and unread counts. */
+export function useRecentMessages(conversationIds: string[]) {
+  const qc = useQueryClient();
+  const key = conversationIds.slice().sort().join(",");
+  useEffect(() => {
+    if (!key) return;
+    const ch = supabase
+      .channel(`recent-${uid()}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => qc.invalidateQueries({ queryKey: ["recent"] }))
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [key, qc]);
+  return useQuery({
+    enabled: !!key,
+    queryKey: ["recent", key],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("id, conversation_id, content, kind, sender_user_id, sender_agent_id, created_at")
+        .in("conversation_id", conversationIds)
+        .order("created_at", { ascending: false })
+        .limit(400);
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+const READ_KEY = "ac-last-read";
+export function getLastRead(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(READ_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+export function markRead(conversationId: string) {
+  const m = getLastRead();
+  m[conversationId] = new Date().toISOString();
+  localStorage.setItem(READ_KEY, JSON.stringify(m));
+}
