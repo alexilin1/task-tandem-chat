@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseMentions, checkRunAllowed, canDecideApproval, checkInviteUsable } from "./safeguards";
+import { parseMentions, checkRunAllowed, canDecideApproval, checkInviteUsable, pickBestAgent } from "./safeguards";
 
 const agents = [
   { id: "pm", handle: "ProjectManager" },
