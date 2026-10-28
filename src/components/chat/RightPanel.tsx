@@ -91,6 +91,33 @@ export function RightPanel(props: { conv: Conversation; agents: Agent[]; profile
           )}
         </Section>
 
+        <Section title="Approvals" count={approvals.length}>
+          {approvals.map((a) => (
+            <div key={a.id} className="px-4 py-1.5">
+              <div className="flex items-start gap-2">
+                <ShieldAlert className={cn("mt-0.5 h-4 w-4 shrink-0", a.status === "pending" ? "text-warning" : "text-muted-foreground")} />
+                <div className="min-w-0 flex-1">
+                  <div className={cn("text-[13px]", a.status !== "pending" && "text-muted-foreground")}>{a.action}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {agents.find((x) => x.id === a.agent_id)?.name ?? "Agent"} ·{" "}
+                    {a.status === "pending"
+                      ? "waiting for you"
+                      : `${a.status === "approved" ? "Approved" : "Rejected"}${a.decided_at ? ` · ${new Date(a.decided_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}`}
+                  </div>
+                  {a.details && <div className="mt-0.5 line-clamp-2 text-[11px] text-subtle-foreground">{a.details}</div>}
+                </div>
+              </div>
+              {a.status === "pending" && (
+                <div className="mt-1.5 flex gap-2 pl-6">
+                  <Button size="sm" className="h-7" onClick={() => decideOn(a.id, "approved")}>Approve</Button>
+                  <Button size="sm" variant="outline" className="h-7" onClick={() => decideOn(a.id, "rejected")}>Reject</Button>
+                </div>
+              )}
+            </div>
+          ))}
+          {!approvals.length && <Empty>No approvals requested.</Empty>}
+        </Section>
+
         <Section title="Tasks" count={activeTasks.length}>
           {activeTasks.map((t) => <TaskRow key={t.id} t={t} agent={agents.find((a) => a.id === t.assigned_agent_id)} />)}
           {doneTasks.map((t) => <TaskRow key={t.id} t={t} agent={agents.find((a) => a.id === t.assigned_agent_id)} />)}
