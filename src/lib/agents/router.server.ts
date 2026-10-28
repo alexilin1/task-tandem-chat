@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { checkRunAllowed, parseMentions, normalizeForDuplicate, pickBestAgent, canReceiveWork, canHandoff, checkBudget, estimateCostUsd, EST_RUN_RESERVE_USD, classifyApprovalAction } from "./safeguards";
+import { checkRunAllowed, parseMentions, normalizeForDuplicate, pickBestAgent, canReceiveWork, canHandoff, checkBudget, estimateCostUsd, EST_RUN_RESERVE_USD, classifyApprovalAction, checkThreadAllowed, THREAD_MAX_PARTICIPANTS } from "./safeguards";
 import { runAgentLLM, pickAgentWithLLM, type AgentOutput } from "./llm.server";
 
 type Admin = SupabaseClient<Database>;
@@ -46,6 +46,14 @@ async function budgetFor(admin: Admin, workspaceId: string, agentId: string) {
 export async function sha256Hex(s: string) {
   const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function closeThread(admin: Admin, th: Conversation, status: "published" | "stopped", result: string | null, note: string | null, agent?: Agent) {
+  const { data: updated } = await admin.from("conversations").update({ thread_status: status, thread_result: result, updated_at: new Date().toISOString() }).eq("id", th.id).eq("thread_status", "open").select("id");
+  if (!updated?.length || !th.parent_conversation_id) return;
+  await admin.from("messages").insert({ conversation_id: th.id, kind: "system", content: note ?? `${agent?.name ?? "An agent"} published the result. Thread closed.` });
+  await admin.from("messages").insert({ conversation_id: th.parent_conversation_id, sender_agent_id: agent?.id ?? null, kind: "task_event", thread_id: th.id, content: result ? `${agent?.name ?? "Thread"} shared the outcome of private thread **${th.title}**\n\n${result}` : `Private thread **${th.title}** ended — ${note}` });
+  await logActivity(admin, { workspace_id: th.workspace_id, conversation_id: th.parent_conversation_id, agent_id: agent?.id ?? null, event_type: `thread_${status}`, summary: result ? `${agent?.name} published ${th.title}` : `${th.title} stopped`, metadata: { thread_id: th.id } });
 }
 
 async function pauseConversation(admin: Admin, convId: string, reason: string) {
@@ -95,7 +103,7 @@ export async function routeMessage(admin: Admin, start: RouterMessage) {
     const { data: conv } = await admin.from("conversations").select("kind").eq("id", convId).single();
     if (conv?.kind === "dm" && agents.length === 1 && agents[0]) {
       queue.push({ agentId: agents[0].id, msg: start });
-    } else if (conv?.kind === "group" && agents.length) {
+    } else if ((conv?.kind === "group" || conv?.kind === "thread") && agents.length) {
       // Keyword heuristic first; when it can't decide (no fit or a tie), ask the LLM to pick one handle.
       let chosen = pickBestAgent(start.content, agents);
       if (!chosen) {
@@ -123,6 +131,14 @@ export async function routeMessage(admin: Admin, start: RouterMessage) {
 
     const { data: conv } = await admin.from("conversations").select("*").eq("id", convId).single();
     if (!conv) return;
+    if (conv.kind === "thread") {
+      const { count: agentMsgs } = await admin.from("messages").select("id", { count: "exact", head: true }).eq("conversation_id", convId).not("sender_agent_id", "is", null);
+      const tc = checkThreadAllowed({ status: conv.thread_status, ageMs: Date.now() - new Date(conv.created_at).getTime(), agentMessages: agentMsgs ?? 0 });
+      if (!tc.ok) {
+        if (conv.thread_status === "open") await closeThread(admin, conv, "stopped", null, `Thread stopped: ${tc.reason}.`);
+        return;
+      }
+    }
     const since = new Date(Date.now() - 60_000).toISOString();
     const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
     const { count: runsLastMinute } = await admin.from("agent_runs").select("id", { count: "exact", head: true }).eq("conversation_id", convId).gte("created_at", since);
@@ -226,7 +242,8 @@ Rules:
 - Use actions to create tasks (assignee_handle without @), update task status/progress/result (task_id from the list), save important decisions to memory, or request_approval for sensitive operations (production changes, deploys, deletions, external data sharing, spending). Never assume approval was granted.
 - To delegate work to another agent, use a "handoff" action (title, description = the context they need, assignee_handle, optional task_id it depends on). Don't also @mention them in your message.
 - When you receive a handoff (a message containing task_id), first use accept_handoff (or reject_handoff / request_clarification with a reason) with that task_id, then do the work and finish with update_task status completed (result = your output) or failed. Results go back to the sender automatically.
-- Set unused action fields to null.`;
+- To work something out privately with 1-3 other agents without cluttering the main chat, use "start_private_thread" (title, description = context and goal, assignee_handle = comma-separated handles). Only do this for genuine multi-agent back-and-forth.
+${conv.kind === "thread" ? `- You are in a PRIVATE THREAD (goal: ${conv.description}). Talk only to thread members via @Handle. When the group reaches a conclusion, one agent uses "publish_thread_result" with result = concise summary; that closes the thread and posts the summary to the main chat. Don't drag it out.\n` : ""}- Set unused action fields to null.`;
 
   const input = `Shared memory:\n${(memory ?? []).map((m) => `- (${m.kind}) ${m.content}`).join("\n") || "none"}
 
@@ -313,6 +330,20 @@ async function applyOutput(admin: Admin, agents: Agent[], agent: Agent, conv: Da
       await logActivity(admin, { workspace_id: ws, conversation_id: convId, agent_id: agent.id, task_id: a.task_id, run_id: runId, event_type: `handoff_${status}`, summary: `${agent.name} ${status === "accepted" ? "accepted" : status === "rejected" ? "rejected" : "asked for clarification on"} a handoff` });
       const from = agents.find((x) => x.id === h.from_agent_id);
       if (from && status !== "accepted") await postSystemish(`${agent.name} ${status === "rejected" ? "rejected" : "needs clarification on"} the handoff from @${from.handle}${a.description ? `: ${a.description}` : ""}`, [from.id], a.task_id);
+    } else if (a.type === "start_private_thread" && a.title && conv.kind !== "thread") {
+      const handles = (a.assignee_handle ?? "").split(/[,\s]+/).map((h) => h.replace("@", "").toLowerCase()).filter(Boolean);
+      const members = agents.filter((x) => x.id !== agent.id && handles.includes(x.handle.toLowerCase())).slice(0, THREAD_MAX_PARTICIPANTS - 1);
+      if (!members.length) continue;
+      const { data: th } = await admin.from("conversations").insert({ workspace_id: ws, title: a.title, kind: "thread", description: a.description ?? "", parent_conversation_id: convId, started_by_agent_id: agent.id, max_depth: conv.max_depth }).select().single();
+      if (!th) continue;
+      await admin.from("conversation_participants").insert([agent, ...members].map((x) => ({ conversation_id: th.id, agent_id: x.id })));
+      await admin.from("messages").insert({ conversation_id: convId, sender_agent_id: agent.id, kind: "task_event", thread_id: th.id, content: `${agent.name} started a private thread **${th.title}** with ${members.map((m) => m.name).join(", ")}` });
+      await logActivity(admin, { workspace_id: ws, conversation_id: convId, agent_id: agent.id, run_id: runId, event_type: "thread_started", summary: `${agent.name} started private thread ${th.title}`, metadata: { thread_id: th.id } });
+      const { data: first } = await admin.from("messages").insert({ conversation_id: th.id, sender_agent_id: agent.id, content: `${members.map((m) => `@${m.handle}`).join(" ")} ${a.description ?? a.title}`, mentions: members.map((m) => m.id), depth: parent.depth + 1, correlation_id: parent.correlation_id }).select().single();
+      if (first) await routeMessage(admin, first as RouterMessage);
+    } else if (a.type === "publish_thread_result" && conv.kind === "thread" && conv.thread_status === "open" && (a.result || a.description)) {
+      await closeThread(admin, conv, "published", (a.result || a.description)!, null, agent);
+      conv.thread_status = "published";
     } else if (a.type === "save_memory" && (a.result || a.description || a.title)) {
       await admin.from("conversation_memory").insert({ conversation_id: convId, kind: "decision", content: (a.result || a.description || a.title)!, created_by_agent_id: agent.id });
     }
