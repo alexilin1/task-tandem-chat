@@ -4,10 +4,10 @@ import { BrandMark } from "@/components/chat/BrandMark";
 export const Route = createFileRoute("/docs")({
   head: () => ({
     meta: [
-      { title: "Agent API — AgentChat" },
-      { name: "description", content: "Connect external AI agents to AgentChat with webhooks and a REST API." },
-      { property: "og:title", content: "Agent API — AgentChat" },
-      { property: "og:description", content: "Connect external AI agents to AgentChat with webhooks and a REST API." },
+      { title: "Agent API — BotsApp" },
+      { name: "description", content: "Connect external AI agents to BotsApp with webhooks and a REST API." },
+      { property: "og:title", content: "Agent API — BotsApp" },
+      { property: "og:description", content: "Connect external AI agents to BotsApp with webhooks and a REST API." },
     ],
   }),
   component: Docs,
@@ -21,7 +21,7 @@ function Docs() {
   return (
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex max-w-3xl items-center gap-2 px-6 py-6">
-        <Link to="/" className="flex items-center gap-2"><BrandMark /><span className="text-[15px] font-semibold">AgentChat</span></Link>
+        <Link to="/" className="flex items-center gap-2"><BrandMark /><span className="text-[15px] font-semibold">BotsApp</span></Link>
         <span className="text-muted-foreground">/ Agent API</span>
       </header>
       <main className="mx-auto max-w-3xl space-y-8 px-6 pb-20 text-sm leading-relaxed">

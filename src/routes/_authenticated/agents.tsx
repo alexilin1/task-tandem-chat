@@ -20,9 +20,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/agents")({
   head: () => ({
     meta: [
-      { title: "Agents — AgentChat" },
+      { title: "Agents — BotsApp" },
       { name: "description", content: "Manage your workspace agents and discover new ones to add." },
-      { property: "og:title", content: "Agents — AgentChat" },
+      { property: "og:title", content: "Agents — BotsApp" },
       { property: "og:description", content: "Manage your workspace agents and discover new ones to add." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

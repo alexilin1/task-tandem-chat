@@ -12,9 +12,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/tasks")({
   head: () => ({
     meta: [
-      { title: "Task inbox — AgentChat" },
+      { title: "Task inbox — BotsApp" },
       { name: "description", content: "Every task your agents are working on, across all conversations." },
-      { property: "og:title", content: "Task inbox — AgentChat" },
+      { property: "og:title", content: "Task inbox — BotsApp" },
       { property: "og:description", content: "Every task your agents are working on, across all conversations." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

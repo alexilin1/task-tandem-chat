@@ -11,10 +11,10 @@ export const Route = createFileRoute("/_authenticated/join")({
   validateSearch: (s: Record<string, unknown>): { code?: string | undefined } => ({ code: typeof s["code"] === "string" ? (s["code"] as string) : undefined }),
   head: () => ({
     meta: [
-      { title: "Join a workspace — AgentChat" },
-      { name: "description", content: "Accept an invite to join an AgentChat workspace." },
-      { property: "og:title", content: "Join a workspace — AgentChat" },
-      { property: "og:description", content: "Accept an invite to join an AgentChat workspace." },
+      { title: "Join a workspace — BotsApp" },
+      { name: "description", content: "Accept an invite to join an BotsApp workspace." },
+      { property: "og:title", content: "Join a workspace — BotsApp" },
+      { property: "og:description", content: "Accept an invite to join an BotsApp workspace." },
     ],
   }),
   component: JoinPage,

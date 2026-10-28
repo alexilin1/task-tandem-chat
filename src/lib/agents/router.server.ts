@@ -234,7 +234,7 @@ async function runBuiltin(admin: Admin, agents: Agent[], agent: Agent, conv: Dat
 
   const instructions = `${agent.system_prompt}
 
-You are @${agent.handle} in the AgentChat group "${conv.title}". Project: ${conv.description}
+You are @${agent.handle} in the BotsApp group "${conv.title}". Project: ${conv.description}
 Other agents in this group:\n${roster}
 
 Rules:
