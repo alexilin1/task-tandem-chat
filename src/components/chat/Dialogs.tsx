@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Copy } from "lucide-react";
+import { Copy, MessageSquare } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { createAgent } from "@/lib/chat.functions";
-import { AgentAvatar } from "./Avatars";
+import { AgentAvatar, AgentStatus, AgentTag, providerLabel } from "./Avatars";
 import type { Agent } from "@/hooks/use-chat-data";
 
 export function CreateGroupDialog(props: { open: boolean; onOpenChange: (o: boolean) => void; workspaceId: string; myId: string; agents: Agent[]; onCreated: (id: string) => void }) {
@@ -53,8 +53,8 @@ export function CreateGroupDialog(props: { open: boolean; onOpenChange: (o: bool
               {props.agents.map((a) => {
                 const on = picked.includes(a.id);
                 return (
-                  <button key={a.id} onClick={() => setPicked(on ? picked.filter((x) => x !== a.id) : [...picked, a.id])} className={cn("flex items-center gap-2 rounded-xl border p-2 text-left text-sm", on && "border-primary bg-accent")}>
-                    <AgentAvatar agent={a} size="sm" /> <span className="truncate">{a.name}</span>
+                  <button key={a.id} onClick={() => setPicked(on ? picked.filter((x) => x !== a.id) : [...picked, a.id])} className={cn("flex items-center gap-2 rounded-lg border p-2 text-left text-[13px] transition-ui hover:bg-hover", on && "border-primary bg-selected hover:bg-selected")}>
+                    <AgentAvatar agent={a} size="sm" showStatus={false} /> <span className="truncate">{a.name}</span>
                   </button>
                 );
               })}
@@ -67,7 +67,6 @@ export function CreateGroupDialog(props: { open: boolean; onOpenChange: (o: bool
   );
 }
 
-const EMOJIS = ["🤖", "🧠", "📊", "✍️", "🧪", "🚀", "🛡️", "📚"];
 const COLORS = ["violet", "blue", "emerald", "amber", "rose"] as const;
 const PERMS = [
   { id: "read_history", label: "Read conversation history" },
@@ -83,8 +82,7 @@ export function AddAgentDialog(props: { open: boolean; onOpenChange: (o: boolean
   const [description, setDescription] = useState("");
   const [caps, setCaps] = useState("");
   const [prompt, setPrompt] = useState("");
-  const [emoji, setEmoji] = useState("🤖");
-  const [color, setColor] = useState<(typeof COLORS)[number]>("violet");
+    const [color, setColor] = useState<(typeof COLORS)[number]>("violet");
   const [perms, setPerms] = useState<string[]>(["read_history", "create_tasks", "request_approval"]);
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
@@ -101,7 +99,7 @@ export function AddAgentDialog(props: { open: boolean; onOpenChange: (o: boolean
         data: {
           workspaceId: props.workspaceId, name, handle: handle || name.replace(/[^A-Za-z0-9]/g, ""), description, provider,
           capabilities: caps.split(",").map((s) => s.trim()).filter(Boolean), systemPrompt: prompt || `You are ${name}. ${description}`,
-          avatarEmoji: emoji, color, permissions: perms as any, webhookUrl: provider === "webhook" ? url : null,
+          avatarEmoji: "", color, permissions: perms as any, webhookUrl: provider === "webhook" ? url : null,
         },
       });
       if (r.token) setCreds({ token: r.token, webhookSecret: r.webhookSecret! });
@@ -129,9 +127,9 @@ export function AddAgentDialog(props: { open: boolean; onOpenChange: (o: boolean
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-2">
-              {([["builtin", "Built-in AI"], ["webhook", "Webhook"], ["rest", "REST API"]] as const).map(([v, l]) => (
-                <button key={v} onClick={() => setProvider(v)} className={cn("rounded-xl border p-2 text-sm font-medium", provider === v && "border-primary bg-accent")}>{l}</button>
+            <div className="grid grid-cols-3 gap-1 rounded-lg bg-secondary p-1">
+              {([["builtin", "Built-in"], ["webhook", "Webhook"], ["rest", "REST API"]] as const).map(([v, l]) => (
+                <button key={v} type="button" onClick={() => setProvider(v)} className={cn("h-7 rounded-md text-[13px] font-medium text-muted-foreground transition-ui", provider === v && "bg-background text-foreground shadow-soft")}>{l}</button>
               ))}
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -142,10 +140,13 @@ export function AddAgentDialog(props: { open: boolean; onOpenChange: (o: boolean
             <div className="space-y-1.5"><Label>Capabilities (comma separated)</Label><Input value={caps} onChange={(e) => setCaps(e.target.value)} placeholder="testing, qa" /></div>
             {provider === "builtin" && <div className="space-y-1.5"><Label>Instructions</Label><Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="How should this agent behave?" /></div>}
             {provider === "webhook" && <div className="space-y-1.5"><Label>Webhook URL (https)</Label><Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://my-agent.example.com/hook" /></div>}
-            <div className="flex items-center gap-3">
-              <div className="flex gap-1">{EMOJIS.map((e) => <button key={e} onClick={() => setEmoji(e)} className={cn("rounded-lg p-1 text-lg", emoji === e && "bg-accent")}>{e}</button>)}</div>
+            <div className="space-y-1.5">
+              <Label>Avatar colour</Label>
+              <div className="flex items-center gap-2">
+                <AgentAvatar agent={{ name: name || "Agent", color, status: "online" }} showStatus={false} />
+                {COLORS.map((c) => <button key={c} type="button" aria-label={c} onClick={() => setColor(c)} className={cn("h-5 w-5 rounded-full ring-1 ring-border", `bg-av-${c}`, color === c && "ring-2 ring-primary ring-offset-2 ring-offset-background")} />)}
+              </div>
             </div>
-            <div className="flex gap-1.5">{COLORS.map((c) => <button key={c} onClick={() => setColor(c)} className={cn("h-6 w-6 rounded-full", `bg-av-${c}`, color === c && "ring-2 ring-primary")} />)}</div>
             <div className="space-y-1.5">
               <Label>Permissions</Label>
               {PERMS.map((p) => (
@@ -171,5 +172,33 @@ function Secret({ label, value }: { label: string; value: string }) {
         <Button size="icon" variant="outline" onClick={() => { navigator.clipboard.writeText(value); toast.success("Copied"); }}><Copy className="h-4 w-4" /></Button>
       </div>
     </div>
+  );
+}
+
+export function AgentProfileDialog(props: { agent: Agent | null; onOpenChange: (o: boolean) => void; onMessage: (a: Agent) => void }) {
+  const a = props.agent;
+  return (
+    <Dialog open={!!a} onOpenChange={props.onOpenChange}>
+      <DialogContent className="max-w-sm">
+        {a && (
+          <>
+            <div className="flex items-center gap-3">
+              <AgentAvatar agent={a} size="lg" showStatus={false} />
+              <div className="min-w-0">
+                <DialogTitle className="flex items-center gap-1.5 text-[15px]">{a.name}<AgentTag /></DialogTitle>
+                <div className="text-xs text-muted-foreground">@{a.handle} · {providerLabel[a.provider]}</div>
+              </div>
+            </div>
+            <DialogDescription className="text-[13px]">{a.description || "No description."}</DialogDescription>
+            <dl className="grid grid-cols-[96px_1fr] gap-y-2 text-[13px]">
+              <dt className="text-muted-foreground">Status</dt><dd><AgentStatus status={a.status} /></dd>
+              <dt className="text-muted-foreground">Capabilities</dt><dd>{a.capabilities.join(", ") || "—"}</dd>
+              <dt className="text-muted-foreground">Permissions</dt><dd>{a.permissions.map((p) => p.replace(/_/g, " ")).join(", ") || "—"}</dd>
+            </dl>
+            <DialogFooter><Button onClick={() => props.onMessage(a)}><MessageSquare className="h-4 w-4" />Message</Button></DialogFooter>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
