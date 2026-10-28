@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { Pause, Play, Plus, X, FileText, Circle, CircleDot, CircleCheck, CircleX, CircleDashed, ChevronLeft } from "lucide-react";
+import { Pause, Play, Plus, X, FileText, Circle, CircleDot, CircleCheck, CircleX, CircleDashed, ChevronLeft, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { setPaused } from "@/lib/chat.functions";
+import { decideApproval, setPaused } from "@/lib/chat.functions";
 import { cn } from "@/lib/utils";
 import { AgentAvatar, AgentStatus, AgentTag, HumanAvatar, providerLabel } from "./Avatars";
 import { useConversationData, type Agent, type Conversation, type Profile } from "@/hooks/use-chat-data";
@@ -25,6 +25,7 @@ export function RightPanel(props: { conv: Conversation; agents: Agent[]; profile
   const data = useConversationData(conv.id);
   const qc = useQueryClient();
   const pause = useServerFn(setPaused);
+  const decide = useServerFn(decideApproval);
   const [note, setNote] = useState("");
   const parts = data.participants.data ?? [];
   const convAgents = agents.filter((a) => parts.some((p) => p.agent_id === a.id));
@@ -32,9 +33,21 @@ export function RightPanel(props: { conv: Conversation; agents: Agent[]; profile
   const others = agents.filter((a) => !convAgents.includes(a));
   const files = (data.messages.data ?? []).filter((m) => m.attachment);
   const tasks = data.tasks.data ?? [];
+  const approvals = (data.approvals.data ?? [])
+    .slice()
+    .sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending") || b.created_at.localeCompare(a.created_at));
   const activeTasks = tasks.filter((t) => t.status !== "completed");
   const doneTasks = tasks.filter((t) => t.status === "completed");
   const recent = (data.messages.data ?? []).filter((m) => m.kind === "task_event" || m.kind === "system").slice(-6).reverse();
+
+  async function decideOn(id: string, decision: "approved" | "rejected") {
+    try {
+      await decide({ data: { approvalId: id, decision } });
+      qc.invalidateQueries({ queryKey: ["conv", conv.id, "approvals"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't record your decision");
+    }
+  }
 
   async function addAgent(id: string) {
     const { error } = await supabase.from("conversation_participants").insert({ conversation_id: conv.id, agent_id: id });
@@ -76,6 +89,33 @@ export function RightPanel(props: { conv: Conversation; agents: Agent[]; profile
               ))}
             </ul>
           )}
+        </Section>
+
+        <Section title="Approvals" count={approvals.length}>
+          {approvals.map((a) => (
+            <div key={a.id} className="px-4 py-1.5">
+              <div className="flex items-start gap-2">
+                <ShieldAlert className={cn("mt-0.5 h-4 w-4 shrink-0", a.status === "pending" ? "text-warning" : "text-muted-foreground")} />
+                <div className="min-w-0 flex-1">
+                  <div className={cn("text-[13px]", a.status !== "pending" && "text-muted-foreground")}>{a.action}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {agents.find((x) => x.id === a.agent_id)?.name ?? "Agent"} ·{" "}
+                    {a.status === "pending"
+                      ? "waiting for you"
+                      : `${a.status === "approved" ? "Approved" : "Rejected"}${a.decided_at ? ` · ${new Date(a.decided_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}`}
+                  </div>
+                  {a.details && <div className="mt-0.5 line-clamp-2 text-[11px] text-subtle-foreground">{a.details}</div>}
+                </div>
+              </div>
+              {a.status === "pending" && (
+                <div className="mt-1.5 flex gap-2 pl-6">
+                  <Button size="sm" className="h-7" onClick={() => decideOn(a.id, "approved")}>Approve</Button>
+                  <Button size="sm" variant="outline" className="h-7" onClick={() => decideOn(a.id, "rejected")}>Reject</Button>
+                </div>
+              )}
+            </div>
+          ))}
+          {!approvals.length && <Empty>No approvals requested.</Empty>}
         </Section>
 
         <Section title="Tasks" count={activeTasks.length}>
