@@ -43,6 +43,109 @@ export type Database = {
           },
         ]
       }
+      agent_handoffs: {
+        Row: {
+          accepted_at: string | null
+          attempts: number
+          completed_at: string | null
+          context_summary: string
+          conversation_id: string
+          created_at: string
+          from_agent_id: string
+          handoff_depth: number
+          id: string
+          idempotency_key: string
+          parent_handoff_id: string | null
+          payload: Json
+          result: string | null
+          status: string
+          task_id: string
+          to_agent_id: string
+          workspace_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          attempts?: number
+          completed_at?: string | null
+          context_summary?: string
+          conversation_id: string
+          created_at?: string
+          from_agent_id: string
+          handoff_depth?: number
+          id?: string
+          idempotency_key: string
+          parent_handoff_id?: string | null
+          payload?: Json
+          result?: string | null
+          status?: string
+          task_id: string
+          to_agent_id: string
+          workspace_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          attempts?: number
+          completed_at?: string | null
+          context_summary?: string
+          conversation_id?: string
+          created_at?: string
+          from_agent_id?: string
+          handoff_depth?: number
+          id?: string
+          idempotency_key?: string
+          parent_handoff_id?: string | null
+          payload?: Json
+          result?: string | null
+          status?: string
+          task_id?: string
+          to_agent_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_handoffs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_handoffs_from_agent_id_fkey"
+            columns: ["from_agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_handoffs_parent_handoff_id_fkey"
+            columns: ["parent_handoff_id"]
+            isOneToOne: false
+            referencedRelation: "agent_handoffs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_handoffs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_handoffs_to_agent_id_fkey"
+            columns: ["to_agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_handoffs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_runs: {
         Row: {
           agent_id: string | null
@@ -344,6 +447,44 @@ export type Database = {
           },
         ]
       }
+      handoff_events: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          created_at: string
+          event_type: string
+          handoff_id: string
+          id: string
+          metadata: Json
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type?: string
+          created_at?: string
+          event_type: string
+          handoff_id: string
+          id?: string
+          metadata?: Json
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          created_at?: string
+          event_type?: string
+          handoff_id?: string
+          id?: string
+          metadata?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handoff_events_handoff_id_fkey"
+            columns: ["handoff_id"]
+            isOneToOne: false
+            referencedRelation: "agent_handoffs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           approval_id: string | null
@@ -353,6 +494,7 @@ export type Database = {
           correlation_id: string
           created_at: string
           depth: number
+          handoff_id: string | null
           id: string
           is_demo: boolean
           kind: string
@@ -370,6 +512,7 @@ export type Database = {
           correlation_id?: string
           created_at?: string
           depth?: number
+          handoff_id?: string | null
           id?: string
           is_demo?: boolean
           kind?: string
@@ -387,6 +530,7 @@ export type Database = {
           correlation_id?: string
           created_at?: string
           depth?: number
+          handoff_id?: string | null
           id?: string
           is_demo?: boolean
           kind?: string
@@ -402,6 +546,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_handoff_id_fkey"
+            columns: ["handoff_id"]
+            isOneToOne: false
+            referencedRelation: "agent_handoffs"
             referencedColumns: ["id"]
           },
           {
