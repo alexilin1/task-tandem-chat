@@ -92,13 +92,13 @@ function Landing() {
                 Start a conversation <ArrowUpRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button variant="outline" className="h-12 rounded-full px-5" onClick={tour.show}>
+            <Button variant="outline" className="h-12 rounded-full px-5" onClick={() => setVideoOpen(true)}>
               <Play className="h-3.5 w-3.5" /> Try the demo
             </Button>
           </div>
           <div className="mt-10 flex items-center gap-2 text-xs text-muted-foreground">
-            <MessageCircle className="h-4 w-4" /> Meet your team in an interactive demo. No sign-up
-            needed.
+            <MessageCircle className="h-4 w-4" /> Watch a real walkthrough, or try the interactive
+            demo. No sign-up needed.
           </div>
         </div>
         <div className="overflow-hidden rounded-[24px] border bg-background shadow-[0_24px_80px_-32px_oklch(0.2_0.03_163_/_25%)]">
