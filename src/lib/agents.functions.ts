@@ -57,12 +57,3 @@ export const setAgentEnabled = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { status };
   });
-
-export const removeAgent = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator(idInput)
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("agents").delete().eq("id", data.agentId);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });

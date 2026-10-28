@@ -112,7 +112,7 @@ export function AgentStatus({
   }
   const map: Record<string, [string, string]> = {
     online: ["bg-success", "Online"],
-    offline: ["bg-subtle-foreground", "Offline"],
+    offline: ["bg-subtle-foreground", "Switched off"],
     not_connected: ["bg-warning", "Not connected"],
   };
   const [dot, label] = map[status] ?? map["offline"]!;
@@ -124,7 +124,7 @@ export function AgentStatus({
 }
 
 export function statusLabel(s: string) {
-  return s === "online" ? "Online" : s === "offline" ? "Offline" : "Not connected";
+  return s === "online" ? "Online" : s === "offline" ? "Switched off" : "Not connected";
 }
 
 export const providerLabel: Record<string, string> = {
