@@ -173,14 +173,16 @@ function Landing() {
           <DialogTitle className="sr-only">BotsApp walkthrough</DialogTitle>
           <video
             key={String(videoOpen)}
-            src={walkthrough.url}
             controls
             autoPlay
             muted
             playsInline
             loop
             className="aspect-video w-full bg-foreground/95"
-          />
+          >
+            <source src={walkthrough.url} type="video/mp4" />
+            <source src={webm.url} type="video/webm" />
+          </video>
           <div className="flex items-center justify-between gap-3 px-5 pb-4 pt-1">
             <p className="text-xs text-muted-foreground">
               A real walkthrough: sign up, chat, handoffs, tasks, approvals and budgets.
