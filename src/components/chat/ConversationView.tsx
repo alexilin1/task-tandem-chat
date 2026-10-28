@@ -78,7 +78,7 @@ export function ConversationView(props: {
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col bg-background">
       <header className="flex h-14 shrink-0 items-center gap-2 border-b px-3 md:px-4">
-        <Button size="icon" variant="ghost" className="h-9 w-9 md:hidden" onClick={props.onBack} aria-label="Back to conversations"><ChevronLeft className="h-5 w-5" /></Button>
+        <Button size="icon" variant="ghost" className="h-9 w-9" onClick={props.onBack} aria-label="Back to conversations"><ChevronLeft className="h-5 w-5" /></Button>
         <button className="min-w-0 flex-1 text-left" onClick={props.onToggleDetails}>
           <h1 className="truncate text-sm font-semibold">{conv.title}</h1>
           <div className="truncate text-xs text-muted-foreground">
