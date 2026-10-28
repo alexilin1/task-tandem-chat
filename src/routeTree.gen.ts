@@ -10,33 +10,57 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicAgentsMessagesRouteImport } from './routes/api/public/agents/messages'
+import { Route as ApiPublicAgentsTasksRouteImport } from './routes/api/public/agents/tasks'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAgentsMessagesRoute = ApiPublicAgentsMessagesRouteImport.update({
+  id: '/api/public/agents/messages',
+  path: '/api/public/agents/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAgentsTasksRoute = ApiPublicAgentsTasksRouteImport.update({
+  id: '/api/public/agents/tasks',
+  path: '/api/public/agents/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
+  '/api/public/agents/tasks': typeof ApiPublicAgentsTasksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
+  '/api/public/agents/tasks': typeof ApiPublicAgentsTasksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
+  '/api/public/agents/tasks': typeof ApiPublicAgentsTasksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/public/agents/messages' | '/api/public/agents/tasks'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/public/agents/messages' | '/api/public/agents/tasks'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/public/agents/messages'
+    | '/api/public/agents/tasks'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicAgentsMessagesRoute: typeof ApiPublicAgentsMessagesRoute
+  ApiPublicAgentsTasksRoute: typeof ApiPublicAgentsTasksRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +72,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/agents/messages': {
+      id: '/api/public/agents/messages'
+      path: '/api/public/agents/messages'
+      fullPath: '/api/public/agents/messages'
+      preLoaderRoute: typeof ApiPublicAgentsMessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/agents/tasks': {
+      id: '/api/public/agents/tasks'
+      path: '/api/public/agents/tasks'
+      fullPath: '/api/public/agents/tasks'
+      preLoaderRoute: typeof ApiPublicAgentsTasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicAgentsMessagesRoute: ApiPublicAgentsMessagesRoute,
+  ApiPublicAgentsTasksRoute: ApiPublicAgentsTasksRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
