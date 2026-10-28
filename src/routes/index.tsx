@@ -176,7 +176,9 @@ function Landing() {
             src={walkthrough.url}
             controls
             autoPlay
+            muted
             playsInline
+            loop
             className="aspect-video w-full bg-foreground/95"
           />
           <div className="flex items-center justify-between gap-3 px-5 pb-4 pt-1">
