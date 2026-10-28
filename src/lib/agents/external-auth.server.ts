@@ -1,4 +1,5 @@
 import { sha256Hex } from "./router.server";
+import { statusAfterAgentCall } from "./safeguards";
 
 export async function authenticateAgent(request: Request) {
   const auth = request.headers.get("authorization") ?? "";
@@ -10,7 +11,7 @@ export async function authenticateAgent(request: Request) {
   if (!cred) return null;
   const { data: agent } = await supabaseAdmin.from("agents").select("*").eq("id", cred.agent_id).single();
   if (!agent) return null;
-  await supabaseAdmin.from("agents").update({ status: "online", last_seen_at: new Date().toISOString() }).eq("id", agent.id);
+  await supabaseAdmin.from("agents").update({ status: statusAfterAgentCall(agent.status), last_seen_at: new Date().toISOString() }).eq("id", agent.id);
   return { agent, admin: supabaseAdmin };
 }
 

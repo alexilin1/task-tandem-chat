@@ -50,3 +50,16 @@ describe("safeguards", () => {
     expect(pickBestAgent("frontend backend", roster)).toBeNull(); // tie → let the LLM decide
   });
 });
+
+import { canReceiveWork, statusAfterAgentCall } from "./safeguards";
+describe("agent availability", () => {
+  it("routes only to online agents", () => {
+    expect(canReceiveWork({ status: "online" })).toBe(true);
+    expect(canReceiveWork({ status: "offline" })).toBe(false);
+    expect(canReceiveWork({ status: "not_connected" })).toBe(false);
+  });
+  it("API calls connect an agent but never switch a paused one back on", () => {
+    expect(statusAfterAgentCall("not_connected")).toBe("online");
+    expect(statusAfterAgentCall("offline")).toBe("offline");
+  });
+});

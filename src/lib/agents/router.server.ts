@@ -61,10 +61,11 @@ export async function insertAgentMessage(
 export async function routeMessage(admin: Admin, start: RouterMessage) {
   const convId = start.conversation_id;
   const { data: parts } = await admin.from("conversation_participants").select("agent_id").eq("conversation_id", convId).not("agent_id", "is", null);
-  const ids = (parts ?? []).map((p) => p.agent_id!) ;
+  const ids = (parts ?? []).map((p) => p.agent_id!);
   if (!ids.length) return;
   const { data: agentRows } = await admin.from("agents").select("*").in("id", ids);
-  const agents = (agentRows ?? []) as Agent[];
+  const agents = ((agentRows ?? []) as Agent[]).filter(canReceiveWork);
+  if (!agents.length) return;
   const queue: Array<{ agentId: string; msg: RouterMessage }> = start.mentions
     .filter((id) => ids.includes(id))
     .map((agentId) => ({ agentId, msg: start }));
