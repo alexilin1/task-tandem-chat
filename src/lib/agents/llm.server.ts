@@ -49,16 +49,36 @@ const schema = jsonSchema<AgentOutput>(({
   },
 }) as any);
 
-export async function runAgentLLM(instructions: string, input: string) {
+function gateway() {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("AI is not configured (missing LOVABLE_API_KEY)");
   const runIdFetch = createLovableAiGatewayRunIdFetch();
-  const provider = createOpenAI({
+  return createOpenAI({
     baseURL: "https://ai.gateway.lovable.dev/v1",
     apiKey,
     headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
     fetch: runIdFetch.fetch,
   });
+}
+
+/**
+ * Picks the single best-suited agent handle for a message, or null when no
+ * agent is a good fit. Used only when the keyword heuristic can't decide.
+ */
+export async function pickAgentWithLLM(roster: string, content: string): Promise<string | null> {
+  const provider = gateway();
+  const result = streamText({
+    model: provider.responses(AGENT_MODEL),
+    instructions: `You route a chat message to at most one agent. Reply with ONLY the exact handle of the best-suited agent, or "none" if the message is small talk, rhetorical, or no agent fits. Never explain.\nAgents:\n${roster}`,
+    messages: [{ role: "user", content }],
+    providerOptions: { openai: { forceReasoning: true, reasoningEffort: "low", store: false } },
+  });
+  const text = (await result.text).trim().replace(/^@/, "");
+  return text.toLowerCase() === "none" || !text ? null : text;
+}
+
+export async function runAgentLLM(instructions: string, input: string) {
+  const provider = gateway();
   const result = streamText({
     model: provider.responses(AGENT_MODEL),
     instructions,
