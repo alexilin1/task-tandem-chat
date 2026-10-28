@@ -21,6 +21,18 @@ export function CreateGroupDialog(props: { open: boolean; onOpenChange: (o: bool
   const [desc, setDesc] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [people, setPeople] = useState<string[]>([]);
+  const [members, setMembers] = useState<{ id: string; display_name: string }[]>([]);
+  useEffect(() => {
+    if (!props.open) return;
+    (async () => {
+      const { data: wm } = await supabase.from("workspace_members").select("user_id").eq("workspace_id", props.workspaceId);
+      const ids = (wm ?? []).map((m) => m.user_id).filter((id) => id !== props.myId);
+      if (!ids.length) return setMembers([]);
+      const { data: prof } = await supabase.from("profiles").select("id, display_name").in("id", ids);
+      setMembers((prof ?? []) as { id: string; display_name: string }[]);
+    })();
+  }, [props.open, props.workspaceId, props.myId]);
 
   async function create() {
     if (!title.trim()) return;
@@ -31,10 +43,10 @@ export function CreateGroupDialog(props: { open: boolean; onOpenChange: (o: bool
       toast.error(error?.message ?? "Failed");
       return;
     }
-    await supabase.from("conversation_participants").insert([{ conversation_id: data.id, user_id: props.myId }, ...picked.map((agent_id) => ({ conversation_id: data.id, agent_id }))]);
+    await supabase.from("conversation_participants").insert([{ conversation_id: data.id, user_id: props.myId }, ...people.map((user_id) => ({ conversation_id: data.id, user_id })), ...picked.map((agent_id) => ({ conversation_id: data.id, agent_id }))]);
     if (desc.trim()) await supabase.from("conversation_memory").insert({ conversation_id: data.id, kind: "objective", content: desc.trim(), created_by_user_id: props.myId });
     setBusy(false);
-    setTitle(""); setDesc(""); setPicked([]);
+    setTitle(""); setDesc(""); setPicked([]); setPeople([]);
     props.onOpenChange(false);
     props.onCreated(data.id);
   }
@@ -44,11 +56,29 @@ export function CreateGroupDialog(props: { open: boolean; onOpenChange: (o: bool
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create group</DialogTitle>
-          <DialogDescription>Give it a shared objective and pick the agents that should collaborate.</DialogDescription>
+          <DialogDescription>Give it a shared objective and pick the people and agents who should collaborate.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5"><Label>Name</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Launch landing page" /></div>
           <div className="space-y-1.5"><Label>Shared objective</Label><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="What should this group accomplish?" /></div>
+          <div className="space-y-1.5">
+            <Label>People</Label>
+            {members.length ? (
+              <div className="grid grid-cols-2 gap-2">
+                {members.map((u) => {
+                  const on = people.includes(u.id);
+                  return (
+                    <button key={u.id} type="button" onClick={() => setPeople(on ? people.filter((x) => x !== u.id) : [...people, u.id])} className={cn("flex items-center gap-2 rounded-lg border p-2 text-left text-[13px] transition-ui hover:bg-hover", on && "border-primary bg-selected hover:bg-selected")}>
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium">{(u.display_name || "?").slice(0, 1).toUpperCase()}</span>
+                      <span className="truncate">{u.display_name || "Teammate"}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">No teammates yet — invite people to this workspace first, then add them here.</p>
+            )}
+          </div>
           <div className="space-y-1.5">
             <Label>Agents</Label>
             <div className="grid grid-cols-2 gap-2">
