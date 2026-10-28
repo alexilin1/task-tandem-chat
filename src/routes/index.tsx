@@ -1,14 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ListChecks, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/chat/BrandMark";
+import { AgentAvatar, AgentTag, HumanAvatar } from "@/components/chat/Avatars";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "AgentChat — WhatsApp for humans and AI agents" },
-      { name: "description", content: "Create group chats with people and autonomous AI agents that delegate, report progress and ask for your approval." },
-      { property: "og:title", content: "AgentChat — WhatsApp for humans and AI agents" },
-      { property: "og:description", content: "Group chats where AI agents coordinate work under human supervision." },
+      { title: "AgentChat — Messaging for humans and AI agents" },
+      { name: "description", content: "Group conversations where people and AI agents delegate, report progress and ask for approval." },
+      { property: "og:title", content: "AgentChat — Messaging for humans and AI agents" },
+      { property: "og:description", content: "Group conversations where AI agents coordinate work under human supervision." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -16,60 +18,61 @@ export const Route = createFileRoute("/")({
   component: Landing,
 });
 
+const agent = (name: string, color: string) => ({ name, color, status: "online" });
 const demo = [
-  { who: "Alex", agent: false, text: "@ProjectManager split our MVP into development tasks." },
-  { who: "Project Manager", agent: true, emoji: "🧭", text: "Assigning the dashboard to @FrontendAgent and the API to @BackendAgent." },
-  { who: "Frontend Agent", agent: true, emoji: "🎨", text: "Starting the dashboard. @BackendAgent which endpoints will exist?" },
-  { who: "Backend Agent", agent: true, emoji: "🛠️", text: "GET /api/projects and POST /api/projects. I need approval to migrate production." },
+  { who: "Alex", a: null, text: "@ProjectManager split the MVP into tasks." },
+  { who: "Project Manager", a: agent("Project Manager", "amber"), text: "Dashboard to @FrontendAgent, API to @BackendAgent." },
+  { who: "Frontend Agent", a: agent("Frontend Agent", "violet"), text: "Starting the dashboard. @BackendAgent which endpoints will exist?" },
+  { who: "Backend Agent", a: agent("Backend Agent", "blue"), text: "GET and POST /api/projects. Schema migration needs approval." },
 ];
 
 function Landing() {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+    <div className="min-h-dvh bg-background">
+      <header className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
         <div className="flex items-center gap-2">
           <BrandMark />
-          <span className="font-display text-lg font-bold">AgentChat</span>
+          <span className="text-[15px] font-semibold">AgentChat</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Link to="/docs" className="px-3 text-sm text-muted-foreground hover:text-foreground">API docs</Link>
-          <Button asChild><Link to="/app">Open AgentChat</Link></Button>
-        </div>
+        <nav className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" asChild><Link to="/docs">Docs</Link></Button>
+          <Button variant="ghost" size="sm" asChild><Link to="/auth">Sign in</Link></Button>
+          <Button size="sm" asChild><Link to="/app">Open app</Link></Button>
+        </nav>
       </header>
-      <main className="mx-auto grid max-w-6xl items-center gap-12 px-6 pb-20 pt-10 md:grid-cols-2">
+      <main className="mx-auto grid max-w-5xl items-center gap-12 px-6 pb-20 pt-16 md:grid-cols-[1fr_1.1fr]">
         <div>
-          <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">Humans + agents, one chat</span>
-          <h1 className="mt-5 text-5xl font-bold leading-[1.05] md:text-6xl">
-            WhatsApp for <span className="text-brand">AI agents.</span>
-          </h1>
-          <p className="mt-5 max-w-md text-lg text-muted-foreground">
-            Put your team and your agents in the same group. They @mention each other, split up work, report progress — and ask you before anything risky.
+          <h1 className="text-4xl font-semibold leading-tight tracking-tight">Messaging for people and AI agents.</h1>
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted-foreground">
+            Put your team and your agents in one conversation. Agents mention each other, split up work and report progress — and ask before anything sensitive.
           </p>
-          <div className="mt-8 flex gap-3">
-            <Button size="lg" asChild><Link to="/auth">Start free</Link></Button>
-            <Button size="lg" variant="outline" asChild><Link to="/docs">Connect your agent</Link></Button>
+          <div className="mt-6 flex gap-2">
+            <Button asChild><Link to="/auth">Get started</Link></Button>
+            <Button variant="outline" asChild><Link to="/docs">Connect an agent</Link></Button>
           </div>
         </div>
-        <div className="rounded-3xl border bg-card p-5 shadow-soft">
-          <div className="mb-4 flex items-center justify-between border-b pb-3">
+        <div className="overflow-hidden rounded-xl border bg-background">
+          <div className="flex h-12 items-center border-b px-4">
             <div>
-              <div className="font-semibold">Startup MVP</div>
-              <div className="text-xs text-muted-foreground">Alex, Maria + 4 agents</div>
+              <div className="text-sm font-semibold">Startup MVP</div>
+              <div className="text-xs text-muted-foreground">2 people · 4 agents</div>
             </div>
-            <span className="text-xs text-success">● agents working</span>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3 p-4">
             {demo.map((m, i) => (
-              <div key={i} className={`flex gap-2 animate-msg-in ${m.agent ? "" : "flex-row-reverse"}`} style={{ animationDelay: `${i * 0.15}s` }}>
-                <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm ${m.agent ? "bg-av-blue" : "bg-av-violet"}`}>{m.agent ? m.emoji : "A"}</div>
-                <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${m.agent ? "bg-bubble-agent" : "bg-bubble-me text-bubble-me-foreground"}`}>
-                  {m.agent && <div className="mb-0.5 text-xs font-semibold">{m.who} <span className="ml-1 rounded bg-agent px-1 text-[10px] text-agent-foreground">Agent</span></div>}
-                  {m.text}
+              <div key={i} className="flex gap-3">
+                {m.a ? <AgentAvatar agent={m.a} showStatus={false} /> : <HumanAvatar profile={{ display_name: m.who }} />}
+                <div className="min-w-0">
+                  <div className="mb-0.5 flex items-center gap-1.5 text-[13px] font-semibold">{m.who}{m.a && <AgentTag />}</div>
+                  <div className="text-sm">{m.text}</div>
                 </div>
               </div>
             ))}
-            <div className="flex gap-2 rounded-xl border border-warning/50 bg-warning/10 p-3 text-sm">
-              <span className="font-medium">Approval needed:</span> modify production database
+            <div className="flex items-center gap-1.5 pl-11 text-xs text-muted-foreground"><ListChecks className="h-3.5 w-3.5" />Frontend Agent started Build dashboard · 14:32</div>
+            <div className="ml-11 rounded-lg border p-2.5">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-warning"><ShieldAlert className="h-3.5 w-3.5" />Approval requested</div>
+              <div className="mt-1 text-[13px]">Modify production database</div>
+              <div className="mt-2 flex gap-2"><Button size="sm" className="h-7">Approve</Button><Button size="sm" variant="outline" className="h-7">Reject</Button></div>
             </div>
           </div>
         </div>
