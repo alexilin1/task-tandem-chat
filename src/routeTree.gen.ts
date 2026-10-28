@@ -13,11 +13,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DocsRouteImport } from './routes/docs'
+import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
 import { Route as AuthenticatedAgentsRouteImport } from './routes/_authenticated/agents'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedJoinRouteImport } from './routes/_authenticated/join'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
+import { Route as AuthenticatedUsageRouteImport } from './routes/_authenticated/usage'
 import { Route as ApiPublicAgentsMessagesRouteImport } from './routes/api/public/agents/messages'
 import { Route as ApiPublicAgentsTasksRouteImport } from './routes/api/public/agents/tasks'
 import { Route as ApiPublicJobsAgentQueueRouteImport } from './routes/api/public/jobs/agent-queue'
@@ -40,6 +42,11 @@ const DocsRoute = DocsRouteImport.update({
   id: '/docs',
   path: '/docs',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedActivityRoute = AuthenticatedActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAgentsRoute = AuthenticatedAgentsRouteImport.update({
   id: '/agents',
@@ -66,6 +73,11 @@ const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
   path: '/tasks',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedUsageRoute = AuthenticatedUsageRouteImport.update({
+  id: '/usage',
+  path: '/usage',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiPublicAgentsMessagesRoute = ApiPublicAgentsMessagesRouteImport.update({
   id: '/api/public/agents/messages',
   path: '/api/public/agents/messages',
@@ -86,11 +98,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
+  '/activity': typeof AuthenticatedActivityRoute
   '/agents': typeof AuthenticatedAgentsRoute
   '/app': typeof AuthenticatedAppRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/join': typeof AuthenticatedJoinRoute
   '/tasks': typeof AuthenticatedTasksRoute
+  '/usage': typeof AuthenticatedUsageRoute
   '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
   '/api/public/agents/tasks': typeof ApiPublicAgentsTasksRoute
   '/api/public/jobs/agent-queue': typeof ApiPublicJobsAgentQueueRoute
@@ -99,11 +113,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
+  '/activity': typeof AuthenticatedActivityRoute
   '/agents': typeof AuthenticatedAgentsRoute
   '/app': typeof AuthenticatedAppRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/join': typeof AuthenticatedJoinRoute
   '/tasks': typeof AuthenticatedTasksRoute
+  '/usage': typeof AuthenticatedUsageRoute
   '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
   '/api/public/agents/tasks': typeof ApiPublicAgentsTasksRoute
   '/api/public/jobs/agent-queue': typeof ApiPublicJobsAgentQueueRoute
@@ -114,11 +130,13 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
+  '/_authenticated/activity': typeof AuthenticatedActivityRoute
   '/_authenticated/agents': typeof AuthenticatedAgentsRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/join': typeof AuthenticatedJoinRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
+  '/_authenticated/usage': typeof AuthenticatedUsageRoute
   '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
   '/api/public/agents/tasks': typeof ApiPublicAgentsTasksRoute
   '/api/public/jobs/agent-queue': typeof ApiPublicJobsAgentQueueRoute
@@ -129,11 +147,13 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/docs'
+    | '/activity'
     | '/agents'
     | '/app'
     | '/approvals'
     | '/join'
     | '/tasks'
+    | '/usage'
     | '/api/public/agents/messages'
     | '/api/public/agents/tasks'
     | '/api/public/jobs/agent-queue'
@@ -142,11 +162,13 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/docs'
+    | '/activity'
     | '/agents'
     | '/app'
     | '/approvals'
     | '/join'
     | '/tasks'
+    | '/usage'
     | '/api/public/agents/messages'
     | '/api/public/agents/tasks'
     | '/api/public/jobs/agent-queue'
@@ -156,11 +178,13 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/docs'
+    | '/_authenticated/activity'
     | '/_authenticated/agents'
     | '/_authenticated/app'
     | '/_authenticated/approvals'
     | '/_authenticated/join'
     | '/_authenticated/tasks'
+    | '/_authenticated/usage'
     | '/api/public/agents/messages'
     | '/api/public/agents/tasks'
     | '/api/public/jobs/agent-queue'
@@ -206,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/activity': {
+      id: '/_authenticated/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof AuthenticatedActivityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/agents': {
       id: '/_authenticated/agents'
       path: '/agents'
@@ -241,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTasksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/usage': {
+      id: '/_authenticated/usage'
+      path: '/usage'
+      fullPath: '/usage'
+      preLoaderRoute: typeof AuthenticatedUsageRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/agents/messages': {
       id: '/api/public/agents/messages'
       path: '/api/public/agents/messages'
@@ -266,19 +304,23 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute
   AuthenticatedAgentsRoute: typeof AuthenticatedAgentsRoute
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
   AuthenticatedJoinRoute: typeof AuthenticatedJoinRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
+  AuthenticatedUsageRoute: typeof AuthenticatedUsageRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedActivityRoute: AuthenticatedActivityRoute,
   AuthenticatedAgentsRoute: AuthenticatedAgentsRoute,
   AuthenticatedAppRoute: AuthenticatedAppRoute,
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
   AuthenticatedJoinRoute: AuthenticatedJoinRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
+  AuthenticatedUsageRoute: AuthenticatedUsageRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
