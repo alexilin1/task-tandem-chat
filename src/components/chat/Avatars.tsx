@@ -14,20 +14,38 @@ const sizes = {
   xs: "h-5 w-5 text-[9px]",
   sm: "h-7 w-7 text-[11px]",
   md: "h-8 w-8 text-xs",
-  lg: "h-10 w-10 text-sm",
+  lg: "h-12 w-12 text-base",
 } as const;
 type Size = keyof typeof sizes;
 
 export function initials(name: string) {
-  const words = name.replace(/agent$/i, "").trim().split(/\s+/).filter(Boolean);
+  const words = name
+    .replace(/agent$/i, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
   const w = words.length ? words : [name];
   return ((w[0]?.[0] ?? "") + (w[1]?.[0] ?? "")).toUpperCase() || "?";
 }
 
-export function AgentAvatar({ agent, size = "md", showStatus = true }: { agent: Pick<Agent, "name" | "color" | "status">; size?: Size; showStatus?: boolean }) {
+export function AgentAvatar({
+  agent,
+  size = "md",
+  showStatus = true,
+}: {
+  agent: Pick<Agent, "name" | "color" | "status">;
+  size?: Size;
+  showStatus?: boolean;
+}) {
   return (
     <div className="relative shrink-0" aria-hidden>
-      <div className={cn("grid place-items-center rounded-full font-semibold text-av-ink", sizes[size], tint[agent.color] ?? "bg-av-blue")}>
+      <div
+        className={cn(
+          "grid place-items-center rounded-full font-semibold text-av-ink",
+          sizes[size],
+          tint[agent.color] ?? "bg-av-blue",
+        )}
+      >
         {size === "xs" || size === "sm" ? initials(agent.name).slice(0, 1) : initials(agent.name)}
       </div>
       {size !== "xs" && (
@@ -42,24 +60,49 @@ export function AgentAvatar({ agent, size = "md", showStatus = true }: { agent: 
   );
 }
 
-export function HumanAvatar({ profile, size = "md", online }: { profile?: Pick<Profile, "display_name"> | undefined; size?: Size; online?: boolean }) {
+export function HumanAvatar({
+  profile,
+  size = "md",
+  online,
+}: {
+  profile?: Pick<Profile, "display_name"> | undefined;
+  size?: Size;
+  online?: boolean;
+}) {
   return (
     <div className="relative shrink-0" aria-hidden>
-      <div className={cn("grid place-items-center rounded-full bg-secondary font-semibold text-muted-foreground ring-1 ring-border", sizes[size])}>
+      <div
+        className={cn(
+          "grid place-items-center rounded-full bg-secondary font-semibold text-muted-foreground ring-1 ring-border",
+          sizes[size],
+        )}
+      >
         {initials(profile?.display_name ?? "?")}
       </div>
-      {online && size !== "xs" && <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-background" />}
+      {online && size !== "xs" && (
+        <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-background" />
+      )}
     </div>
   );
 }
 
 export function AgentTag() {
-  return <span className="rounded border border-border px-1 text-[10px] font-medium leading-4 text-muted-foreground">Agent</span>;
+  return (
+    <span className="rounded border border-border px-1 text-[10px] font-medium leading-4 text-muted-foreground">
+      Agent
+    </span>
+  );
 }
 
 export type ExecState = "working" | "waiting" | "completed" | "failed" | "idle";
 
-export function AgentStatus({ status, activity }: { status: string; activity?: string | null | undefined }) {
+export function AgentStatus({
+  status,
+  activity,
+}: {
+  status: string;
+  activity?: string | null | undefined;
+}) {
   if (activity) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs text-primary">
@@ -84,4 +127,8 @@ export function statusLabel(s: string) {
   return s === "online" ? "Online" : s === "offline" ? "Offline" : "Not connected";
 }
 
-export const providerLabel: Record<string, string> = { builtin: "Built-in · GPT", webhook: "Webhook", rest: "REST API" };
+export const providerLabel: Record<string, string> = {
+  builtin: "Built-in · GPT",
+  webhook: "Webhook",
+  rest: "REST API",
+};
