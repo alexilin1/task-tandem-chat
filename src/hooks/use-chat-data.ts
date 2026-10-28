@@ -15,15 +15,31 @@ export type Reaction = Database["public"]["Tables"]["reactions"]["Row"];
 
 const uid = () => Math.random().toString(36).slice(2);
 
-export function useWorkspace() {
+export function useWorkspaces() {
   return useQuery({
-    queryKey: ["workspace"],
+    queryKey: ["workspaces"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("workspaces").select("*").order("created_at").limit(1).maybeSingle();
+      const { data, error } = await supabase.from("workspaces").select("*").order("created_at");
       if (error) throw error;
       return data;
     },
   });
+}
+
+const WS_KEY = "ac-active-workspace";
+export function getActiveWorkspaceId(): string | null {
+  try {
+    return localStorage.getItem(WS_KEY);
+  } catch {
+    return null;
+  }
+}
+export function setActiveWorkspaceId(id: string) {
+  try {
+    localStorage.setItem(WS_KEY, id);
+  } catch {
+    /* ignore */
+  }
 }
 
 export function useConversations(workspaceId?: string) {

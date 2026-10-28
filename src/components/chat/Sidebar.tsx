@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, SquarePen, ChevronsUpDown, LogOut, Moon, Sun, BookOpen, UserPlus, Users, MessageSquare, Bot, Inbox } from "lucide-react";
+import { Search, SquarePen, ChevronsUpDown, LogOut, Moon, Sun, BookOpen, UserPlus, Users, MessageSquare, Bot, Inbox, Link2, Check } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
