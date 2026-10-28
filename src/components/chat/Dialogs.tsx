@@ -164,6 +164,41 @@ export function AddAgentDialog(props: { open: boolean; onOpenChange: (o: boolean
   );
 }
 
+export function InviteDialog(props: { open: boolean; onOpenChange: (o: boolean) => void; workspaceId: string; workspaceName: string }) {
+  const invite = useServerFn(createInvite);
+  const [link, setLink] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!props.open) return;
+    setLink(null);
+    setBusy(true);
+    invite({ data: { workspaceId: props.workspaceId } })
+      .then((r) => setLink(`${window.location.origin}/join?code=${r.code}`))
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Couldn't create an invite"))
+      .finally(() => setBusy(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.open, props.workspaceId]);
+
+  return (
+    <Dialog open={props.open} onOpenChange={props.onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Invite people</DialogTitle>
+          <DialogDescription>Anyone with this link can join {props.workspaceName}. It works for 7 days or 25 people.</DialogDescription>
+        </DialogHeader>
+        <div className="flex gap-2">
+          <Input readOnly value={busy ? "Creating link…" : (link ?? "Couldn't create a link")} className="font-mono text-xs" />
+          <Button size="icon" variant="outline" disabled={!link} aria-label="Copy invite link" onClick={() => { if (link) { navigator.clipboard.writeText(link); toast.success("Link copied"); } }}>
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+        <DialogFooter><Button variant="outline" onClick={() => props.onOpenChange(false)}>Done</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function Secret({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-1.5">
