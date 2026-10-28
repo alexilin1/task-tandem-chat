@@ -54,6 +54,10 @@ const demo = [
 function Landing() {
   const tour = useWelcomeDemo();
   const [videoOpen, setVideoOpen] = useState(false);
+  useEffect(() => {
+    if (videoOpen) tour.close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoOpen]);
   return (
     <div className="min-h-dvh bg-background">
       <header className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5 sm:px-8">
