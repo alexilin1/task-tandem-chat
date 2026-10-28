@@ -120,3 +120,26 @@ export function checkInviteUsable(invite: { expires_at: string; uses: number; ma
   if (invite.uses >= invite.max_uses) return { ok: false, reason: "This invite link has reached its use limit" };
   return { ok: true };
 }
+
+export const MAX_HANDOFF_DEPTH = 3;
+
+/** Rules for an agent delegating work to another agent. */
+export function checkHandoffAllowed(i: {
+  fromId: string;
+  toId: string | null;
+  fromPermissions: string[];
+  participantIds: string[];
+  parentDepth: number;
+}): { ok: true; depth: number } | { ok: false; reason: string } {
+  if (!i.fromPermissions.includes("create_tasks")) return { ok: false, reason: "sender cannot delegate" };
+  if (!i.toId || !i.participantIds.includes(i.toId)) return { ok: false, reason: "receiving agent is not in this conversation" };
+  if (i.toId === i.fromId) return { ok: false, reason: "cannot hand off to itself" };
+  const depth = i.parentDepth + 1;
+  if (depth > MAX_HANDOFF_DEPTH) return { ok: false, reason: `handoff chain deeper than ${MAX_HANDOFF_DEPTH}` };
+  return { ok: true, depth };
+}
+
+/** Stable key so the same delegation is never recorded twice. */
+export function handoffIdempotencyKey(fromId: string, toId: string, title: string, correlationId: string) {
+  return `${correlationId}:${fromId}:${toId}:${normalizeForDuplicate(title)}`;
+}

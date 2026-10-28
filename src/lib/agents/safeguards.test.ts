@@ -50,3 +50,14 @@ describe("safeguards", () => {
     expect(pickBestAgent("frontend backend", roster)).toBeNull(); // tie → let the LLM decide
   });
 });
+
+import { checkHandoffAllowed, handoffIdempotencyKey } from "./safeguards";
+describe("handoffs", () => {
+  const ok = { fromId: "a", toId: "b", fromPermissions: ["create_tasks"], participantIds: ["a", "b"], parentDepth: 0 };
+  it("allows a valid handoff at depth 1", () => expect(checkHandoffAllowed(ok)).toEqual({ ok: true, depth: 1 }));
+  it("blocks a 4th-level handoff", () => expect(checkHandoffAllowed({ ...ok, parentDepth: 3 }).ok).toBe(false));
+  it("blocks agents outside the conversation", () => expect(checkHandoffAllowed({ ...ok, toId: "z" }).ok).toBe(false));
+  it("blocks agents without delegate permission", () => expect(checkHandoffAllowed({ ...ok, fromPermissions: [] }).ok).toBe(false));
+  it("blocks self handoff", () => expect(checkHandoffAllowed({ ...ok, toId: "a", participantIds: ["a"] }).ok).toBe(false));
+  it("same delegation yields same key", () => expect(handoffIdempotencyKey("a", "b", "Do  X", "c")).toBe(handoffIdempotencyKey("a", "b", "do x", "c")));
+});

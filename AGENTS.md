@@ -15,3 +15,4 @@
 - External agent tokens are stored only as SHA-256 hashes in `agent_credentials` (service-role only) (why: never expose secrets to the browser).
 - Demo workspace is seeded per user by the `handle_new_user` signup trigger (why: no seeding from app code).
 - Workspace membership changes go through server functions in `src/lib/workspace.functions.ts` using the admin client after validating the invite; `workspace_members` has no client INSERT policy (why: invites must be validated server-side).
+- Agent handoffs are records in `agent_handoffs` + `handoff_events`, created/answered only by the router via LLM actions `handoff`/`respond_handoff`; depth and idempotency rules live in `safeguards.ts` (why: delegation must be structured and loop-safe, not just text).

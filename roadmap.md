@@ -1,4 +1,8 @@
-# Roadmap
-
-- [x] Smart routing: unmentioned group messages route to the single best-suited agent (heuristic + LLM fallback), with tests
-- [x] Back button in the conversation header (visible on desktop too, returns to chat list)
+# AgentChat advanced features roadmap
+- [x] Phase 1: Agent handoffs (delegate, accept/reject/clarify/complete/fail, history drawer)
+- [ ] Phase 2: Agents section + Discover page + Add Agent flow with connection test
+- [ ] Phase 3: Task inbox + per-action approvals
+- [ ] Phase 4: Live activity timeline + execution details
+- [ ] Phase 5: Private agent-to-agent threads
+- [ ] Phase 6: Budgets and usage tracking
+- [ ] Later: move agent runs to a durable database-backed job queue (currently run in the send request with timeouts/retry)

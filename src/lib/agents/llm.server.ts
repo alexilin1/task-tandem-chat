@@ -5,7 +5,9 @@ import { createLovableAiGatewayRunIdFetch } from "@/lib/ai/run-id";
 export const AGENT_MODEL = "openai/gpt-6-astra";
 
 export interface AgentAction {
-  type: "create_task" | "update_task" | "request_approval" | "save_memory";
+  type: "create_task" | "update_task" | "request_approval" | "save_memory" | "handoff" | "respond_handoff";
+  handoff_id: string | null;
+  handoff_response: "accept" | "reject" | "clarify" | "complete" | "fail" | null;
   title: string | null;
   description: string | null;
   assignee_handle: string | null;
@@ -32,9 +34,11 @@ const schema = jsonSchema<AgentOutput>(({
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["type", "title", "description", "assignee_handle", "task_id", "status", "progress", "result", "approval_action"],
+        required: ["type", "title", "description", "assignee_handle", "task_id", "status", "progress", "result", "approval_action", "handoff_id", "handoff_response"],
         properties: {
-          type: { type: "string", enum: ["create_task", "update_task", "request_approval", "save_memory"] },
+          type: { type: "string", enum: ["create_task", "update_task", "request_approval", "save_memory", "handoff", "respond_handoff"] },
+          handoff_id: nullableStr,
+          handoff_response: { type: ["string", "null"], enum: ["accept", "reject", "clarify", "complete", "fail", null] },
           title: nullableStr,
           description: nullableStr,
           assignee_handle: nullableStr,

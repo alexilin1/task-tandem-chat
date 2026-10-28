@@ -8,6 +8,8 @@ export type Conversation = Database["public"]["Tables"]["conversations"]["Row"];
 export type Message = Database["public"]["Tables"]["messages"]["Row"];
 export type Task = Database["public"]["Tables"]["tasks"]["Row"];
 export type Approval = Database["public"]["Tables"]["approvals"]["Row"];
+export type Handoff = Database["public"]["Tables"]["agent_handoffs"]["Row"];
+export type HandoffEvent = Database["public"]["Tables"]["handoff_events"]["Row"];
 export type Participant = Database["public"]["Tables"]["conversation_participants"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Memory = Database["public"]["Tables"]["conversation_memory"]["Row"];
@@ -102,6 +104,8 @@ export function useConversationData(conversationId?: string) {
       .on("postgres_changes", { event: "*", schema: "public", table: "approvals", filter: f }, inv("approvals"))
       .on("postgres_changes", { event: "*", schema: "public", table: "conversation_participants", filter: f }, inv("participants"))
       .on("postgres_changes", { event: "*", schema: "public", table: "reactions" }, inv("reactions"))
+      .on("postgres_changes", { event: "*", schema: "public", table: "agent_handoffs", filter: f }, inv("handoffs"))
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "handoff_events" }, inv("handoff_events"))
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
@@ -165,7 +169,25 @@ export function useConversationData(conversationId?: string) {
       return data as Reaction[];
     },
   });
-  return { messages, participants, tasks, approvals, memory, reactions };
+  const handoffs = useQuery({
+    enabled,
+    queryKey: ["conv", conversationId, "handoffs"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("agent_handoffs").select("*").eq("conversation_id", conversationId!).order("created_at");
+      if (error) throw error;
+      return data as Handoff[];
+    },
+  });
+  const handoffEvents = useQuery({
+    enabled: enabled && !!handoffs.data?.length,
+    queryKey: ["conv", conversationId, "handoff_events", handoffs.data?.length ?? 0],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("handoff_events").select("*").in("handoff_id", handoffs.data!.map((h) => h.id)).order("created_at");
+      if (error) throw error;
+      return data as HandoffEvent[];
+    },
+  });
+  return { messages, participants, tasks, approvals, memory, reactions, handoffs, handoffEvents };
 }
 
 /** Most recent messages across the given conversations, for sidebar previews and unread counts. */
