@@ -137,3 +137,59 @@ export const MAX_JOB_ATTEMPTS = 3;
 export function jobStatusAfterFailure(attempts: number): "pending" | "failed" {
   return attempts >= MAX_JOB_ATTEMPTS ? "failed" : "pending";
 }
+
+export const MAX_HANDOFF_DEPTH = 3;
+
+/** A handoff is allowed only to a different, online agent and below the depth limit. */
+export function canHandoff(input: { fromId: string; to: { id: string; status: string } | null | undefined; depth: number }): { ok: true } | { ok: false; reason: string } {
+  if (!input.to) return { ok: false, reason: "Receiving agent isn't in this conversation" };
+  if (input.to.id === input.fromId) return { ok: false, reason: "An agent can't hand off to itself" };
+  if (!canReceiveWork(input.to)) return { ok: false, reason: "Receiving agent isn't online" };
+  if (input.depth > MAX_HANDOFF_DEPTH) return { ok: false, reason: `Handoff depth limit (${MAX_HANDOFF_DEPTH}) reached` };
+  return { ok: true };
+}
+
+/**
+ * Estimated cost in USD for a model call. These are estimates from a fixed per-million-token rate,
+ * not billed amounts. Rates live here so they're easy to adjust.
+ */
+export const EST_USD_PER_M_INPUT = 1.25;
+export const EST_USD_PER_M_OUTPUT = 10;
+export function estimateCostUsd(inputTokens: number, outputTokens: number): number {
+  return Math.round(((inputTokens * EST_USD_PER_M_INPUT + outputTokens * EST_USD_PER_M_OUTPUT) / 1_000_000) * 1e6) / 1e6;
+}
+/** Rough reservation for one built-in run before it starts (used for budget checks). */
+export const EST_RUN_RESERVE_USD = estimateCostUsd(6000, 1500);
+
+export type BudgetCheck = { ok: true; warn: boolean } | { ok: false; reason: string };
+
+/** Blocks a run when it would push spend past a hard limit; warns past the threshold. */
+export function checkBudget(budget: { monthly_limit_usd: number; warn_at_percent: number; hard_limit: boolean; max_cost_per_run_usd: number | null } | null, spentUsd: number, reserveUsd: number): BudgetCheck {
+  if (!budget) return { ok: true, warn: false };
+  if (budget.max_cost_per_run_usd != null && reserveUsd > budget.max_cost_per_run_usd)
+    return { ok: false, reason: `Estimated run cost exceeds the per-run limit of $${budget.max_cost_per_run_usd}` };
+  if (budget.hard_limit && spentUsd + reserveUsd > budget.monthly_limit_usd)
+    return { ok: false, reason: `Monthly budget of $${budget.monthly_limit_usd} reached` };
+  return { ok: true, warn: spentUsd + reserveUsd >= (budget.monthly_limit_usd * budget.warn_at_percent) / 100 };
+}
+
+/** Approvals must be decided while pending, before expiry, and for the exact action that was requested. */
+export function checkApprovalDecision(ap: { status: string; expires_at: string; action_hash: string | null }, currentHash: string, now: Date = new Date()): { ok: true } | { ok: false; reason: string } {
+  if (ap.status !== "pending") return { ok: false, reason: "This request was already decided" };
+  if (new Date(ap.expires_at).getTime() <= now.getTime()) return { ok: false, reason: "This request has expired" };
+  if (ap.action_hash && ap.action_hash !== currentHash) return { ok: false, reason: "The requested action changed; a new approval is needed" };
+  return { ok: true };
+}
+
+/** Maps an approval request to a category so the inbox can show what kind of action it is. */
+export function classifyApprovalAction(text: string): string {
+  const t = text.toLowerCase();
+  if (/deploy|release|ship|rollout/.test(t)) return "deploy";
+  if (/delete|remove|drop|wipe/.test(t)) return "delete";
+  if (/spend|pay|purchase|buy|charge|\$/.test(t)) return "spend";
+  if (/email|send|post|tweet|publish|notify/.test(t)) return "external_message";
+  if (/database|production data|migrat|update records/.test(t)) return "modify_data";
+  if (/install|integrat|connect/.test(t)) return "install";
+  if (/access|credential|secret|permission/.test(t)) return "access";
+  return "other";
+}

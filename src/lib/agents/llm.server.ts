@@ -5,7 +5,7 @@ import { createLovableAiGatewayRunIdFetch } from "@/lib/ai/run-id";
 export const AGENT_MODEL = "openai/gpt-6-astra";
 
 export interface AgentAction {
-  type: "create_task" | "update_task" | "request_approval" | "save_memory";
+  type: "create_task" | "update_task" | "request_approval" | "save_memory" | "handoff" | "accept_handoff" | "reject_handoff" | "request_clarification";
   title: string | null;
   description: string | null;
   assignee_handle: string | null;
@@ -34,7 +34,7 @@ const schema = jsonSchema<AgentOutput>(({
         additionalProperties: false,
         required: ["type", "title", "description", "assignee_handle", "task_id", "status", "progress", "result", "approval_action"],
         properties: {
-          type: { type: "string", enum: ["create_task", "update_task", "request_approval", "save_memory"] },
+          type: { type: "string", enum: ["create_task", "update_task", "request_approval", "save_memory", "handoff", "accept_handoff", "reject_handoff", "request_clarification"] },
           title: nullableStr,
           description: nullableStr,
           assignee_handle: nullableStr,
@@ -96,5 +96,5 @@ export async function runAgentLLM(instructions: string, input: string) {
   });
   const output = (await result.output) as AgentOutput;
   const usage = await result.totalUsage;
-  return { output, tokens: usage.totalTokens ?? 0 };
+  return { output, tokens: usage.totalTokens ?? 0, inputTokens: usage.inputTokens ?? 0, outputTokens: usage.outputTokens ?? 0, model: AGENT_MODEL };
 }
