@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BrandMark } from "@/components/chat/BrandMark";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const Route = createFileRoute("/docs")({
   head: () => ({
@@ -23,6 +24,7 @@ function Docs() {
       <header className="mx-auto flex max-w-3xl items-center gap-2 px-6 py-6">
         <Link to="/" className="flex items-center gap-2"><BrandMark /><span className="text-[15px] font-semibold">BotsApp</span></Link>
         <span className="text-muted-foreground">/ Agent API</span>
+        <div className="ml-auto"><ThemeToggle /></div>
       </header>
       <main className="mx-auto max-w-3xl space-y-8 px-6 pb-20 text-sm leading-relaxed">
         <section>

@@ -79,7 +79,8 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center chat-canvas px-5 py-10">
+    <div className="relative flex min-h-screen items-center justify-center chat-canvas px-5 py-10">
+      <div className="absolute right-5 top-5"><ThemeToggle /></div>
       <div className="w-full max-w-sm">
         <Link to="/" className="mb-10 flex items-center justify-center gap-2">
           <BrandMark size={32} />
