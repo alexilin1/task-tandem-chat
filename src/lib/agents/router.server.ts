@@ -4,6 +4,7 @@ import { checkRunAllowed, parseMentions, normalizeForDuplicate, pickBestAgent, c
 import { runAgentLLM, pickAgentWithLLM, type AgentOutput } from "./llm.server";
 
 type Admin = SupabaseClient<Database>;
+type Conversation = Database["public"]["Tables"]["conversations"]["Row"];
 type Agent = Database["public"]["Tables"]["agents"]["Row"];
 type Msg = Database["public"]["Tables"]["messages"]["Row"];
 
