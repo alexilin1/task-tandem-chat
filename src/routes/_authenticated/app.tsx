@@ -98,7 +98,7 @@ function AppPage() {
     setProfileAgent(null);
     const existing = list.find((x) => x.kind === "dm" && x.conversation_participants.some((p) => p.agent_id === agent.id));
     if (existing) return navigate({ search: { c: existing.id } });
-    const { data, error } = await supabase.from("conversations").insert({ workspace_id: ws.data!.id, title: agent.name, kind: "dm", created_by: user.id }).select().single();
+    const { data, error } = await supabase.from("conversations").insert({ workspace_id: wsData!.id, title: agent.name, kind: "dm", created_by: user.id }).select().single();
     if (error || !data) return toast.error("Couldn't start the conversation");
     await supabase.from("conversation_participants").insert([{ conversation_id: data.id, user_id: user.id }, { conversation_id: data.id, agent_id: agent.id }]);
     await qc.invalidateQueries({ queryKey: ["conversations"] });
@@ -112,15 +112,15 @@ function AppPage() {
     navigate({ to: "/auth", replace: true });
   }
 
-  if (ws.isLoading || convs.isLoading) return <AppSkeleton />;
-  if (ws.isError || convs.isError) {
+  if (workspaces.isLoading || convs.isLoading) return <AppSkeleton />;
+  if (workspaces.isError || convs.isError) {
     return (
       <div className="grid h-dvh place-items-center">
         <EmptyState icon={MessageSquare} title="Couldn't load your workspace" description="Check your connection and try again." action={<Button size="sm" variant="outline" onClick={() => location.reload()}>Reload</Button>} />
       </div>
     );
   }
-  if (!ws.data) return <div className="grid h-dvh place-items-center text-sm text-muted-foreground">No workspace found for your account.</div>;
+  if (!wsData) return <div className="grid h-dvh place-items-center text-sm text-muted-foreground">No workspace found for your account.</div>;
 
   const agentList = agents.data ?? [];
   const profileList = profiles.data ?? [];
