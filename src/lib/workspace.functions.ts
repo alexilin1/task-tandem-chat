@@ -64,7 +64,7 @@ export const joinWorkspace = createServerFn({ method: "POST" })
       // Add the new member as a participant in every group conversation so they show up in the people list.
       const { data: groups } = await supabaseAdmin.from("conversations").select("id").eq("workspace_id", invite.workspace_id).eq("kind", "group");
       if (groups?.length) {
-        await supabaseAdmin.from("conversation_participants").upsert(groups.map((g) => ({ conversation_id: g.id, user_id: userId })), { onConflict: "conversation_id,user_id", ignoreDuplicates: true });
+        await supabaseAdmin.from("conversation_participants").insert(groups.map((g) => ({ conversation_id: g.id, user_id: userId })));
       }
     }
     const { data: ws } = await supabaseAdmin.from("workspaces").select("id, name").eq("id", invite.workspace_id).single();
