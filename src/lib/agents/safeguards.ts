@@ -36,8 +36,10 @@ export interface AgentProfile extends AgentRef {
   capabilities: string[];
 }
 
+const STOPWORDS = new Set(["the", "and", "for", "are", "but", "not", "you", "all", "can", "has", "was", "one", "our", "out", "any", "with", "this", "that", "from", "is", "on", "it", "in", "to", "of", "a", "an"]);
+
 function tokens(text: string): Set<string> {
-  return new Set(text.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2));
+  return new Set(text.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 1 && !STOPWORDS.has(w)));
 }
 
 /**
