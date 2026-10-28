@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { BrandMark } from "@/components/chat/BrandMark";
 import { WelcomeDemo } from "@/components/onboarding/WelcomeDemo";
 import { useWelcomeDemo } from "@/hooks/use-welcome-demo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { AgentAvatar, AgentTag } from "@/components/chat/Avatars";
 import walkthrough from "@/assets/botsapp-walkthrough.asset.json";
 import webm from "@/assets/botsapp-walkthrough-webm.asset.json";
@@ -72,6 +73,7 @@ function Landing() {
           <Button variant="ghost" size="sm" asChild>
             <Link to="/auth">Sign in</Link>
           </Button>
+          <ThemeToggle />
           <Button size="sm" className="hidden rounded-full px-5 sm:inline-flex" asChild>
             <Link to="/app">
               Open app <ArrowUpRight className="h-4 w-4" />
