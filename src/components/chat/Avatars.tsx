@@ -59,7 +59,7 @@ export function AgentTag() {
 
 export type ExecState = "working" | "waiting" | "completed" | "failed" | "idle";
 
-export function AgentStatus({ status, activity }: { status: string; activity?: string | null }) {
+export function AgentStatus({ status, activity }: { status: string; activity?: string | null | undefined }) {
   if (activity) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs text-primary">
@@ -72,7 +72,7 @@ export function AgentStatus({ status, activity }: { status: string; activity?: s
     offline: ["bg-subtle-foreground", "Offline"],
     not_connected: ["bg-warning", "Not connected"],
   };
-  const [dot, label] = map[status] ?? map.offline!;
+  const [dot, label] = map[status] ?? map["offline"]!;
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
       <span className={cn("h-1.5 w-1.5 rounded-full", dot)} /> {label}
