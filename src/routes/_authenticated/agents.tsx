@@ -1,15 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { getActiveWorkspaceId, useAgents, useWorkspaces, type Agent } from "@/hooks/use-chat-data";
 import { createAgent } from "@/lib/chat.functions";
 import { setAgentEnabled, testAgentConnection } from "@/lib/agents.functions";
 import { AGENT_TEMPLATES, type AgentTemplate } from "@/lib/agents/templates";
 import { AgentAvatar, AgentStatus, providerLabel } from "@/components/chat/Avatars";
 import { AddAgentDialog } from "@/components/chat/Dialogs";
+import { WorkspaceShell } from "@/components/workspace/WorkspaceShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -45,19 +46,7 @@ function AgentsPage() {
   const refresh = () => qc.invalidateQueries({ queryKey: ["agents", wsId] });
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-        <div className="mb-6 flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon" aria-label="Back to chats">
-            <Link to="/app"><ArrowLeft className="h-4 w-4" /></Link>
-          </Button>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-lg font-semibold">Agents</h1>
-            <p className="text-[13px] text-muted-foreground">{workspaces?.find((w) => w.id === wsId)?.name ?? "Workspace"}</p>
-          </div>
-          <Button onClick={() => setAdding(true)} disabled={!wsId}><Plus className="h-4 w-4" />Add agent</Button>
-        </div>
-
+    <WorkspaceShell title="Agents" wsName={workspaces?.find((w) => w.id === wsId)?.name} actions={<Button onClick={() => setAdding(true)} disabled={!wsId}><Plus className="h-4 w-4" />Add agent</Button>}>
         <div className="mb-4 inline-grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1">
           {([["mine", "Your agents"], ["discover", "Discover"]] as const).map(([v, l]) => (
             <button key={v} onClick={() => setTab(v)} className={cn("h-8 rounded-md px-4 text-[13px] font-medium text-muted-foreground transition-ui", tab === v && "bg-background text-foreground shadow-soft")}>{l}</button>
@@ -74,9 +63,8 @@ function AgentsPage() {
         ) : (
           <Discover workspaceId={wsId} agents={agents ?? []} onAdded={refresh} />
         )}
-      </div>
       {wsId && <AddAgentDialog open={adding} onOpenChange={setAdding} workspaceId={wsId} onCreated={refresh} />}
-    </div>
+    </WorkspaceShell>
   );
 }
 
