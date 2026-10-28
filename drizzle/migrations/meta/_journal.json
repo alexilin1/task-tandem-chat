@@ -36,6 +36,13 @@
       "when": 1793217521431,
       "tag": "0004_agent_job_queue",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793217943142,
+      "tag": "0005_inbox_approvals_activity_budgets",
+      "breakpoints": true
     }
   ]
 }

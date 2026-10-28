@@ -14,6 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_activity_events: {
+        Row: {
+          agent_id: string | null
+          conversation_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          run_id: string | null
+          summary: string
+          task_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          run_id?: string | null
+          summary: string
+          task_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          run_id?: string | null
+          summary?: string
+          task_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_activity_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_activity_events_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_activity_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_activity_events_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_activity_events_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_budgets: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          hard_limit: boolean
+          id: string
+          max_cost_per_run_usd: number | null
+          monthly_limit_usd: number
+          updated_at: string
+          warn_at_percent: number
+          workspace_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          hard_limit?: boolean
+          id?: string
+          max_cost_per_run_usd?: number | null
+          monthly_limit_usd: number
+          updated_at?: string
+          warn_at_percent?: number
+          workspace_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          hard_limit?: boolean
+          id?: string
+          max_cost_per_run_usd?: number | null
+          monthly_limit_usd?: number
+          updated_at?: string
+          warn_at_percent?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_budgets_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_budgets_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_credentials: {
         Row: {
           agent_id: string
@@ -202,28 +328,49 @@ export type Database = {
           agent_id: string | null
           conversation_id: string
           created_at: string
+          error_summary: string | null
+          estimated_cost_usd: number | null
+          finished_at: string | null
           id: string
           input_hash: string | null
+          model: string | null
+          started_at: string | null
           status: string
+          task_id: string | null
           tokens: number
+          workspace_id: string | null
         }
         Insert: {
           agent_id?: string | null
           conversation_id: string
           created_at?: string
+          error_summary?: string | null
+          estimated_cost_usd?: number | null
+          finished_at?: string | null
           id?: string
           input_hash?: string | null
+          model?: string | null
+          started_at?: string | null
           status?: string
+          task_id?: string | null
           tokens?: number
+          workspace_id?: string | null
         }
         Update: {
           agent_id?: string | null
           conversation_id?: string
           created_at?: string
+          error_summary?: string | null
+          estimated_cost_usd?: number | null
+          finished_at?: string | null
           id?: string
           input_hash?: string | null
+          model?: string | null
+          started_at?: string | null
           status?: string
+          task_id?: string | null
           tokens?: number
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -238,6 +385,20 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_runs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_runs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -307,39 +468,92 @@ export type Database = {
           },
         ]
       }
+      approval_events: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          approval_id: string
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type: string
+          approval_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          approval_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_events_approval_id_fkey"
+            columns: ["approval_id"]
+            isOneToOne: false
+            referencedRelation: "approvals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       approvals: {
         Row: {
           action: string
+          action_hash: string | null
+          action_payload: Json
+          action_type: string
           agent_id: string | null
           conversation_id: string
           created_at: string
           decided_at: string | null
           decided_by: string | null
+          decision_note: string | null
           details: string
+          expires_at: string
           id: string
           status: string
           task_id: string | null
         }
         Insert: {
           action: string
+          action_hash?: string | null
+          action_payload?: Json
+          action_type?: string
           agent_id?: string | null
           conversation_id: string
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
+          decision_note?: string | null
           details?: string
+          expires_at?: string
           id?: string
           status?: string
           task_id?: string | null
         }
         Update: {
           action?: string
+          action_hash?: string | null
+          action_payload?: Json
+          action_type?: string
           agent_id?: string | null
           conversation_id?: string
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
+          decision_note?: string | null
           details?: string
+          expires_at?: string
           id?: string
           status?: string
           task_id?: string | null
@@ -686,6 +900,7 @@ export type Database = {
           description: string
           id: string
           is_demo: boolean
+          priority: string
           progress: number
           requires_approval: boolean
           result: string | null
@@ -703,6 +918,7 @@ export type Database = {
           description?: string
           id?: string
           is_demo?: boolean
+          priority?: string
           progress?: number
           requires_approval?: boolean
           result?: string | null
@@ -720,6 +936,7 @@ export type Database = {
           description?: string
           id?: string
           is_demo?: boolean
+          priority?: string
           progress?: number
           requires_approval?: boolean
           result?: string | null
@@ -860,6 +1077,10 @@ export type Database = {
       }
       is_conv_member: { Args: { _conv: string }; Returns: boolean }
       is_ws_member: { Args: { _ws: string }; Returns: boolean }
+      month_spend_usd: {
+        Args: { _agent_id?: string; _workspace_id: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
