@@ -40,7 +40,7 @@ export function WorkspaceShell(props: { title: string; wsName?: string | undefin
         </div>
         <nav className="mb-5 flex gap-1 overflow-x-auto border-b border-border">
           {NAV.map((n) => (
-            <Link key={n.to} to={n.to} className="-mb-px whitespace-nowrap border-b-2 border-transparent px-3 pb-2 text-[13px] font-medium text-muted-foreground transition-ui hover:text-foreground" activeProps={{ className: "border-primary text-foreground" }}>
+            <Link key={n.to} to={n.to} className="-mb-px whitespace-nowrap border-b-2 px-3 pb-2 text-[13px] font-medium transition-ui hover:text-foreground" activeProps={{ className: "border-primary text-foreground" }} inactiveProps={{ className: "border-transparent text-muted-foreground" }}>
               {n.label}
             </Link>
           ))}
