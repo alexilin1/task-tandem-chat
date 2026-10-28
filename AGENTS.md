@@ -15,3 +15,4 @@
 - External agent tokens are stored only as SHA-256 hashes in `agent_credentials` (service-role only) (why: never expose secrets to the browser).
 - Demo workspace is seeded per user by the `handle_new_user` signup trigger (why: no seeding from app code).
 - Workspace membership changes go through server functions in `src/lib/workspace.functions.ts` using the admin client after validating the invite; `workspace_members` has no client INSERT policy (why: invites must be validated server-side).
+- Agents receive routed work only when `status` is `online` (`canReceiveWork`); external agents become online only via a passing connection test or authenticated API call, and `offline` means switched off by a human (why: never send work to unreachable or paused agents).
