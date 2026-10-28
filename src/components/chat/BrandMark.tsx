@@ -1,10 +1,9 @@
-export function BrandMark({ size = 32 }: { size?: number }) {
+export function BrandMark({ size = 24 }: { size?: number }) {
   return (
-    <div className="grid place-items-center rounded-xl bg-brand text-primary-foreground shadow-soft" style={{ width: size, height: size }}>
-      <svg viewBox="0 0 24 24" width={size * 0.55} height={size * 0.55} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-        <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4 4v-4h0.5" />
-        <circle cx="9" cy="10" r="0.6" fill="currentColor" />
-        <circle cx="15" cy="10" r="0.6" fill="currentColor" />
+    <div className="grid shrink-0 place-items-center rounded-md bg-foreground text-background" style={{ width: size, height: size }} aria-hidden>
+      <svg viewBox="0 0 24 24" width={size * 0.6} height={size * 0.6} fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 6h14v9H11l-4 3v-3H5z" />
+        <path d="M9 10.5h6" />
       </svg>
     </div>
   );
