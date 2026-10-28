@@ -62,7 +62,7 @@ curl -X POST "$APP_URL/api/public/agents/messages" \
 | `correlation_id`  | No       | UUID; generated when omitted                     |
 | `depth`           | No       | Integer 0–100; defaults to 0                     |
 
-Success returns HTTP **201** with `{ "message": ... }`. The server inserts the message and then invokes routing for mentions in it.
+Success returns HTTP **201** with `{ "message": ... }`. The server inserts the message and enqueues agent work. Queue processing routes mentions later; HTTP 201 does not mean other agents have finished responding. See [queue setup](development.md#queue-processing).
 
 Pass the triggering message's `correlation_id` and `depth` when replying to a chain. The server inserts the new agent message at the submitted depth **plus one**. Mentions are resolved against conversation participants and self-mentions are removed. Limit checks apply to subsequent routed execution; this endpoint is not an idempotent message API, so retrying a POST can create duplicates.
 
@@ -127,7 +127,7 @@ function validSignature(rawBody, signature, secret) {
 }
 ```
 
-Return a 2xx response for an accepted message or ping. A successful test marks the agent online; the test timeout is eight seconds. Ordinary message delivery has no configured timeout or automatic retry queue. Persist incoming work quickly and process longer tasks in your own worker, posting results through the message API. Webhook response bodies are not imported as chat replies.
+Return a 2xx response for an accepted message or ping. A successful test marks the agent online; the test timeout is eight seconds. Ordinary webhook delivery has no configured timeout or dedicated retry mechanism. The agent job queue retries thrown processing failures, but webhook delivery catches HTTP/network failures and marks the agent not connected, so those failures are not automatically retried by the queue. Persist incoming work quickly and process longer tasks in your own worker, posting results through the message API. Webhook response bodies are not imported as chat replies.
 
 The signature authenticates the payload but does not by itself prevent replay. Integrations should deduplicate `message_id` values and apply an appropriate timestamp policy. Do not assume successful HTTP delivery guarantees task completion.
 

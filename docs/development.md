@@ -14,6 +14,8 @@ Copy `.env.example` to `.env.local`, which is ignored by Git. Values in the exam
 | `SUPABASE_PUBLISHABLE_KEY`      | Server            | Key used by authenticated server middleware                         |
 | `SUPABASE_SERVICE_ROLE_KEY`     | Server            | Privileged operations after caller authorization                    |
 | `LOVABLE_API_KEY`               | Server            | Built-in agents and LLM routing through the Lovable gateway         |
+| `LOVABLE_CRON_SECRET`           | Server            | Bearer secret for the scheduled queue sweep                         |
+| `LOVABLE_CRON_SECRET_PREVIOUS`  | Server            | Optional previous cron secret during rotation                       |
 | `LOVABLE_DB_MIGRATION_URL`      | Migration tooling | Postgres connection read by `drizzle.config.ts`                     |
 
 Keep the browser and server configuration pointed at the same Supabase project, unless deliberately using the client's supported runtime URL override. Never put a service-role key, agent token, webhook secret, or AI gateway key in a `VITE_*` variable: those variables ship to the browser.
@@ -30,7 +32,7 @@ Restart the process after changing environment values.
 
 An existing configured backend is the shortest route to running the app. A new Supabase project needs more than frontend keys:
 
-1. Review and apply the SQL migrations in `drizzle/migrations` in order, recording them with your migration workflow. They define the schema, membership policies, signup trigger, Realtime publication, attachment policies, invites, and restricted profile visibility. Do not reapply them blindly to an existing database.
+1. Review and apply the SQL migrations in `drizzle/migrations` in order, recording them with your migration workflow. They define the schema, membership policies, signup trigger, Realtime publication, attachment policies, invites, restricted profile visibility, and the agent job queue. Do not reapply them blindly to an existing database.
 2. Ensure Supabase Auth is enabled. Configure allowed site/redirect URLs for the local origin you actually use. Signup sends its confirmation redirect to `/app`.
 3. Ensure a private Storage bucket named `attachments` exists, with the intended 10 MB file limit. The checked-in SQL adds object access policies but does not create the bucket. Object paths begin with the conversation UUID.
 4. Verify the Realtime publication includes the tables listed in migration `0000_migration.sql`.
@@ -39,6 +41,23 @@ An existing configured backend is the shortest route to running the app. A new S
 The `handle_new_user` trigger seeds a profile, workspace membership, four agents, conversation, tasks, messages, and shared memory on signup. It does not backfill existing auth users. A local Vite server still uses whichever backend your environment points to; it does not start a local Supabase instance.
 
 Drizzle uses `drizzle/schema.ts`, writes migrations to `drizzle/migrations`, and reads its connection from `LOVABLE_DB_MIGRATION_URL`. SQL also contains triggers, policies, and publication changes, so review database changes alongside the schema rather than relying on generated table definitions alone.
+
+## Queue processing
+
+Apply migration `0004_agent_job_queue.sql` before using the queued send path. It adds `agent_jobs` and the `claim_agent_jobs` database function. The browser starts a separate authenticated queue-processing request after human sends and approval decisions.
+
+Configure a scheduler to POST to `/api/public/jobs/agent-queue` once per minute with `Authorization: Bearer <LOVABLE_CRON_SECRET>`. Set a strong server-only `LOVABLE_CRON_SECRET`; `LOVABLE_CRON_SECRET_PREVIOUS` is optional during rotation. The endpoint processes up to five jobs per call. The checked-in endpoint and migration do not by themselves provision a scheduler on a new deployment.
+
+For local development, you can manually sweep pending work with:
+
+```sh
+curl -X POST "$APP_URL/api/public/jobs/agent-queue" \
+  -H "Authorization: Bearer $LOVABLE_CRON_SECRET"
+```
+
+Set `APP_URL` and export the cron secret in the shell running this command. A successful response reports `claimed` and `done` counts. Missing server configuration returns 500; an invalid bearer secret returns 401. External-agent API messages enqueue work and need this sweep or another queue-processing invocation to trigger downstream replies.
+
+Check `agent_jobs.status`, `attempts`, and `last_error` using authorized backend tools when diagnosing stuck work. Jobs have a three-minute lease and thrown processing failures retry up to three attempts. See [Architecture](architecture.md#controls-and-execution-boundaries) for delivery limitations.
 
 ## Commands
 
@@ -59,15 +78,15 @@ For build or preview commands requiring local server credentials, use Node's `--
 
 ## Troubleshooting
 
-| Symptom                                     | Check                                                                                                                                          |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Missing Supabase environment error          | Both browser and server variables are set; Node received `.env.local`                                                                          |
-| No workspace after signing in               | The signup trigger exists and ran for this user                                                                                                |
-| Messages appear but an agent does not reply | Agent is online, belongs to the conversation, conversation is resumed, provider credentials are set, and the details panel has no pause reason |
-| External agent stays not connected          | Its connection test or authenticated API call succeeded; see the [integration guide](agent-api.md)                                             |
-| Files fail to upload                        | Bucket exists, size limit is configured, and the user has access to the conversation                                                           |
-| Google sign-in fails locally                | Lovable OAuth and local redirect origin are configured                                                                                         |
-| Updates do not appear live                  | Realtime publication and membership policies are applied                                                                                       |
-| Port changes on startup                     | Use the actual URL Vite prints and update auth redirects if necessary                                                                          |
+| Symptom                                     | Check                                                                                                                                                                |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Missing Supabase environment error          | Both browser and server variables are set; Node received `.env.local`                                                                                                |
+| No workspace after signing in               | The signup trigger exists and ran for this user                                                                                                                      |
+| Messages appear but an agent does not reply | Agent is online, belongs to the conversation, conversation is resumed, provider credentials are set, the queue migration is applied, and queue processing is running |
+| External agent stays not connected          | Its connection test or authenticated API call succeeded; see the [integration guide](agent-api.md)                                                                   |
+| Files fail to upload                        | Bucket exists, size limit is configured, and the user has access to the conversation                                                                                 |
+| Google sign-in fails locally                | Lovable OAuth and local redirect origin are configured                                                                                                               |
+| Updates do not appear live                  | Realtime publication and membership policies are applied                                                                                                             |
+| Port changes on startup                     | Use the actual URL Vite prints and update auth redirects if necessary                                                                                                |
 
 Before pushing, fetch and merge remote changes without rewriting published history. Changes on the connected branch also sync to Lovable.

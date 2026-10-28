@@ -7,11 +7,13 @@ flowchart LR
   UI[React UI] --> Query[TanStack Query]
   Query --> UserDB[Supabase client with user session and RLS]
   UI --> Functions[Authenticated server functions]
-  Functions --> Router[Server-side agent router]
+  Functions --> Jobs[(Agent job queue)]
+  Jobs --> Worker[Client-triggered worker or scheduled sweep]
+  Worker --> Router[Server-side agent router]
   Router --> Gateway[Lovable AI gateway]
   Router --> Webhook[External HTTPS webhook]
   External[External agent] --> API[Bearer-authenticated agent API]
-  API --> Router
+  API --> Jobs
   Functions --> Admin[Authorized admin writes]
   API --> Admin
   Router --> Admin
@@ -33,6 +35,7 @@ The UI uses Supabase Auth, user-scoped queries, Row Level Security (RLS), and Re
 | `src/lib/workspace.functions.ts`  | Invite creation, preview, and joining                               |
 | `src/lib/agents.functions.ts`     | Connection tests and enable/disable actions                         |
 | `src/lib/agents/router.server.ts` | Routing, external delivery, built-in execution, structured actions  |
+| `src/lib/agents/queue.server.ts`  | Job enqueueing, atomic claims, and bounded processing               |
 | `src/lib/agents/llm.server.ts`    | Model and Lovable gateway configuration                             |
 | `src/lib/agents/safeguards.ts`    | Pure routing, status, invite, approval, and limit rules             |
 | `src/integrations/supabase/`      | Browser/admin clients, auth middleware, generated database types    |
@@ -45,7 +48,7 @@ Public pages are `/`, `/auth`, and `/docs`. The client-authenticated layout prot
 - **Identity and access:** `profiles`, `workspaces`, `workspace_members`, and `workspace_invites`.
 - **Agents:** `agents` holds provider, handle, capabilities, permissions, and status; `agent_credentials` holds token hashes and webhook secrets and is service-role only.
 - **Conversations:** `conversations`, `conversation_participants`, `messages`, and `reactions`.
-- **Coordination:** `tasks`, `approvals`, `conversation_memory`, and `agent_runs`.
+- **Coordination:** `tasks`, `approvals`, `conversation_memory`, `agent_runs`, and service-role-only `agent_jobs`.
 
 The signup trigger creates a demonstration workspace. Workspace invitations are validated on the server before admin membership writes. Profiles are visible to the current user and relevant workspace peers under the database policies. Files live in private Supabase Storage and are opened with short-lived signed URLs.
 
@@ -65,7 +68,11 @@ The pure safeguard function also supports a per-task run limit of 10, but the cu
 
 Humans review pending approvals in conversation details. Decisions are authorized for workspace members and recorded with the deciding user and timestamp. An approval records consent and routes a follow-up message; it does not itself execute a production change. Built-in agents currently have no shell, browser, or deployment executor.
 
-Routing runs in the message request path. There is no background job queue, durable webhook retry mechanism, or replay protection for webhook deliveries. These boundaries matter when adding long-running work or external integrations; the [roadmap](../roadmap.md) tracks background processing.
+Human sends, approval follow-ups, and external-agent messages enqueue work in `agent_jobs`. The UI calls `runAgentQueue` separately after sending or deciding an approval, processing up to three jobs for a conversation. A scheduled POST to `/api/public/jobs/agent-queue` processes up to five jobs across conversations. External API posts enqueue work and rely on queue processing rather than running agents inline.
+
+Migration `0004_agent_job_queue.sql` adds a unique job per message and the service-role-only `claim_agent_jobs` function. Claims use `FOR UPDATE SKIP LOCKED` with a three-minute lease; expired leases can be reclaimed. Thrown processing failures are retried up to three attempts before a failed status and system notice. The router catches some built-in and webhook failures internally, so queue retries do not guarantee redelivery of every provider failure. Lease expiry and partial execution also mean consumers should not assume exactly-once side effects.
+
+The scheduled sweep must be configured in the hosting environment; adding the route does not install a scheduler. See [Development](development.md#queue-processing) for the endpoint and authentication setup. Ordinary webhook requests still have no configured timeout, and signatures have no built-in replay protection.
 
 ## Verification
 
