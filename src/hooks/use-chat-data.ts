@@ -81,7 +81,7 @@ export function useConversationData(conversationId?: string) {
     const inv = (k: string) => () => qc.invalidateQueries({ queryKey: ["conv", conversationId, k] });
     const ch = supabase
       .channel(`conv-${conversationId}-${uid()}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: f }, inv("messages"))
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: f }, () => { inv("messages")(); inv("memory")(); })
       .on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: f }, inv("tasks"))
       .on("postgres_changes", { event: "*", schema: "public", table: "approvals", filter: f }, inv("approvals"))
       .on("postgres_changes", { event: "*", schema: "public", table: "conversation_participants", filter: f }, inv("participants"))
