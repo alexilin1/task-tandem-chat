@@ -63,3 +63,12 @@ describe("agent availability", () => {
     expect(statusAfterAgentCall("offline")).toBe("offline");
   });
 });
+
+import { jobStatusAfterFailure } from "./safeguards";
+describe("agent job retries", () => {
+  it("retries a failed job up to 3 attempts, then gives up", () => {
+    expect(jobStatusAfterFailure(1)).toBe("pending");
+    expect(jobStatusAfterFailure(2)).toBe("pending");
+    expect(jobStatusAfterFailure(3)).toBe("failed");
+  });
+});

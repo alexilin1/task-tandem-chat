@@ -161,9 +161,9 @@ async function deliverExternal(admin: Admin, agent: Agent, msg: RouterMessage) {
   try {
     const sig = await hmacHex(cred.webhook_secret, body);
     const res = await fetch(agent.webhook_url, { method: "POST", headers: { "Content-Type": "application/json", "X-AgentChat-Signature": sig }, body });
-    await admin.from("agents").update({ status: res.ok ? "online" : "offline", last_seen_at: res.ok ? new Date().toISOString() : agent.last_seen_at }).eq("id", agent.id);
+    await admin.from("agents").update({ status: res.ok ? "online" : "not_connected", last_seen_at: res.ok ? new Date().toISOString() : agent.last_seen_at }).eq("id", agent.id);
   } catch {
-    await admin.from("agents").update({ status: "offline" }).eq("id", agent.id);
+    await admin.from("agents").update({ status: "not_connected" }).eq("id", agent.id);
   }
 }
 
