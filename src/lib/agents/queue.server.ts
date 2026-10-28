@@ -11,7 +11,7 @@ export async function enqueueAgentWork(admin: Admin, msg: { id: string; conversa
 
 /** Process a bounded batch of queued jobs. Each job is claimed atomically, so parallel runs never double-process. */
 export async function processAgentJobs(admin: Admin, opts: { limit: number; conversationId?: string }) {
-  const { data: jobs, error } = await admin.rpc("claim_agent_jobs", { _limit: opts.limit, _conversation_id: opts.conversationId ?? undefined });
+  const { data: jobs, error } = await admin.rpc("claim_agent_jobs", opts.conversationId ? { _limit: opts.limit, _conversation_id: opts.conversationId } : { _limit: opts.limit });
   if (error) throw new Error(error.message);
   const { routeMessage } = await import("./router.server");
   let done = 0;
