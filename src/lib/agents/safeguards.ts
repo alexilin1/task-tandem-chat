@@ -19,7 +19,7 @@ export function parseMentions(text: string, agents: AgentRef[]): string[] {
   const re = /@([A-Za-z0-9_-]+)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
-    const tag = m[1].toLowerCase();
+    const tag = (m[1] ?? "").toLowerCase();
     const a = agents.find((x) => x.handle.toLowerCase() === tag);
     if (a) found.add(a.id);
   }

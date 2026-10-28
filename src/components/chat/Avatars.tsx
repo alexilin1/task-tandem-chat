@@ -19,7 +19,7 @@ export function AgentAvatar({ agent, size = "md" }: { agent: Pick<Agent, "avatar
   );
 }
 
-export function HumanAvatar({ profile, size = "md", online }: { profile?: Pick<Profile, "display_name" | "avatar_color">; size?: "sm" | "md"; online?: boolean }) {
+export function HumanAvatar({ profile, size = "md", online }: { profile?: Pick<Profile, "display_name" | "avatar_color"> | undefined; size?: "sm" | "md"; online?: boolean }) {
   const s = size === "sm" ? "h-7 w-7 text-xs" : "h-9 w-9 text-sm";
   return (
     <div className="relative shrink-0">

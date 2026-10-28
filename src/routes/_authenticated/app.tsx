@@ -11,7 +11,7 @@ import { AddAgentDialog, CreateGroupDialog } from "@/components/chat/Dialogs";
 import { BrandMark } from "@/components/chat/BrandMark";
 
 export const Route = createFileRoute("/_authenticated/app")({
-  validateSearch: (s: Record<string, unknown>) => ({ c: typeof s.c === "string" ? s.c : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({ c: typeof s["c"] === "string" ? (s["c"] as string) : undefined }),
   head: () => ({
     meta: [
       { title: "Chats — AgentChat" },

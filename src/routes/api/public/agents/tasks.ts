@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/public/agents/tasks")({
         if (!p.success) return json({ error: "Invalid body" }, 400);
         const { data: t } = await ctx.admin.from("tasks").select("*").eq("id", p.data.task_id).maybeSingle();
         if (!t || !(await agentInConversation(ctx.admin, ctx.agent.id, t.conversation_id))) return json({ error: "Forbidden" }, 403);
-        const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        const patch: { updated_at: string; status?: typeof p.data.status; progress?: number; result?: string } = { updated_at: new Date().toISOString() };
         if (p.data.status) patch.status = p.data.status;
         if (p.data.progress != null) patch.progress = p.data.progress;
         if (p.data.result) patch.result = p.data.result;

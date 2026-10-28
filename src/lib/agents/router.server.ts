@@ -72,7 +72,7 @@ export async function routeMessage(admin: Admin, start: RouterMessage) {
   // DMs with a single agent: route every human message to it.
   if (!queue.length && !start.sender_agent_id) {
     const { data: conv } = await admin.from("conversations").select("kind").eq("id", convId).single();
-    if (conv?.kind === "dm" && agents.length === 1) queue.push({ agentId: agents[0].id, msg: start });
+    if (conv?.kind === "dm" && agents.length === 1 && agents[0]) queue.push({ agentId: agents[0].id, msg: start });
   }
 
   let runsThisSend = 0;

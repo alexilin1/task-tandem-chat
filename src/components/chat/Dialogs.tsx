@@ -26,7 +26,8 @@ export function CreateGroupDialog(props: { open: boolean; onOpenChange: (o: bool
     const { data, error } = await supabase.from("conversations").insert({ workspace_id: props.workspaceId, title: title.trim(), description: desc, created_by: props.myId }).select().single();
     if (error || !data) {
       setBusy(false);
-      return toast.error(error?.message ?? "Failed");
+      toast.error(error?.message ?? "Failed");
+      return;
     }
     await supabase.from("conversation_participants").insert([{ conversation_id: data.id, user_id: props.myId }, ...picked.map((agent_id) => ({ conversation_id: data.id, agent_id }))]);
     if (desc.trim()) await supabase.from("conversation_memory").insert({ conversation_id: data.id, kind: "objective", content: desc.trim(), created_by_user_id: props.myId });

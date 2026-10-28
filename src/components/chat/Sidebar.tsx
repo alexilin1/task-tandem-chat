@@ -19,8 +19,8 @@ interface ConvItem {
 export function Sidebar(props: {
   conversations: ConvItem[];
   agents: Agent[];
-  me?: Profile;
-  activeId?: string;
+  me?: Profile | undefined;
+  activeId?: string | undefined;
   onSelect: (id: string) => void;
   onCreateGroup: () => void;
   onAddAgent: () => void;

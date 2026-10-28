@@ -20,8 +20,8 @@ export interface AgentOutput {
   actions: AgentAction[];
 }
 
-const nullableStr = { type: ["string", "null"] } as const;
-const schema = jsonSchema<AgentOutput>({
+const nullableStr: { type: ("string" | "null")[] } = { type: ["string", "null"] };
+const schema = jsonSchema<AgentOutput>(({
   type: "object",
   additionalProperties: false,
   required: ["message", "actions"],
@@ -47,7 +47,7 @@ const schema = jsonSchema<AgentOutput>({
       },
     },
   },
-});
+}) as any);
 
 export async function runAgentLLM(instructions: string, input: string) {
   const apiKey = process.env["LOVABLE_API_KEY"];

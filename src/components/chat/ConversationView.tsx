@@ -75,7 +75,10 @@ export function ConversationView(props: { conv: Conversation; agents: Agent[]; p
 
   async function openAttachment(path: string) {
     const { data: s, error } = await supabase.storage.from("attachments").createSignedUrl(path, 300);
-    if (error || !s) return toast.error("Could not open file");
+    if (error || !s) {
+      toast.error("Could not open file");
+      return;
+    }
     window.open(s.signedUrl, "_blank", "noopener");
   }
 
@@ -178,7 +181,7 @@ export function ConversationView(props: { conv: Conversation; agents: Agent[]; p
               }
             }}
             rows={1}
-            placeholder={convAgents.length ? `Message… use @${convAgents[0].handle} to ask an agent` : "Message…"}
+            placeholder={convAgents[0] ? `Message… use @${convAgents[0].handle} to ask an agent` : "Message…"}
             className="max-h-40 min-h-11 resize-none rounded-2xl bg-card"
           />
           <Button size="icon" className="h-11 w-11 shrink-0 rounded-2xl" onClick={submit} disabled={sending && !text} title="Send"><Send className="h-4 w-4" /></Button>

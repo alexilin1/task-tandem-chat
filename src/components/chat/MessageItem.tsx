@@ -10,13 +10,13 @@ const EMOJIS = ["👍", "🎉", "👀", "❤️"];
 
 export function MessageItem(props: {
   m: Message;
-  agent?: Agent;
-  profile?: Profile;
+  agent?: Agent | undefined;
+  profile?: Profile | undefined;
   isMe: boolean;
-  replyTarget?: { name: string; content: string };
+  replyTarget?: { name: string; content: string } | undefined;
   reactions: Reaction[];
   myId: string;
-  approval?: Approval;
+  approval?: Approval | undefined;
   onReply: () => void;
   onReact: (emoji: string) => void;
   onDecide: (id: string, d: "approved" | "rejected") => void;
