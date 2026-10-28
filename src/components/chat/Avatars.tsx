@@ -28,7 +28,7 @@ export function AgentAvatar({ agent, size = "md", showStatus = true }: { agent: 
   return (
     <div className="relative shrink-0" aria-hidden>
       <div className={cn("grid place-items-center rounded-full font-semibold text-av-ink", sizes[size], tint[agent.color] ?? "bg-av-blue")}>
-        {initials(agent.name)}
+        {size === "xs" || size === "sm" ? initials(agent.name).slice(0, 1) : initials(agent.name)}
       </div>
       {size !== "xs" && (
         <span className="absolute -bottom-0.5 -right-0.5 grid h-3.5 w-3.5 place-items-center rounded-full bg-foreground text-background ring-2 ring-background">

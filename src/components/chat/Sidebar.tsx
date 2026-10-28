@@ -87,7 +87,7 @@ export function AppSidebar(props: {
       <div className="px-3 pb-2">
         <button onClick={props.onSearch} className="flex h-8 w-full items-center gap-2 rounded-lg border bg-background px-2.5 text-[13px] text-subtle-foreground transition-ui hover:border-ring/40">
           <Search className="h-3.5 w-3.5" /> Search
-          <kbd className="ml-auto rounded border px-1 font-sans text-[10px] text-muted-foreground">⌘K</kbd>
+          <kbd className="ml-auto hidden rounded md:inline border px-1 font-sans text-[10px] text-muted-foreground">⌘K</kbd>
         </button>
         <div className="mt-2 flex gap-0.5" role="tablist">
           {([["all", "All"], ["dm", "Direct"], ["group", "Groups"], ["agents", "Agents"]] as const).map(([v, l]) => (
