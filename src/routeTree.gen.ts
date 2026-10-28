@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DocsRouteImport } from './routes/docs'
+import { Route as AuthenticatedAgentsRouteImport } from './routes/_authenticated/agents'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedJoinRouteImport } from './routes/_authenticated/join'
 import { Route as ApiPublicAgentsMessagesRouteImport } from './routes/api/public/agents/messages'
@@ -36,6 +37,11 @@ const DocsRoute = DocsRouteImport.update({
   id: '/docs',
   path: '/docs',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAgentsRoute = AuthenticatedAgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
@@ -62,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
+  '/agents': typeof AuthenticatedAgentsRoute
   '/app': typeof AuthenticatedAppRoute
   '/join': typeof AuthenticatedJoinRoute
   '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
+  '/agents': typeof AuthenticatedAgentsRoute
   '/app': typeof AuthenticatedAppRoute
   '/join': typeof AuthenticatedJoinRoute
   '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
@@ -82,6 +90,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
+  '/_authenticated/agents': typeof AuthenticatedAgentsRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/_authenticated/join': typeof AuthenticatedJoinRoute
   '/api/public/agents/messages': typeof ApiPublicAgentsMessagesRoute
@@ -93,6 +102,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/docs'
+    | '/agents'
     | '/app'
     | '/join'
     | '/api/public/agents/messages'
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/docs'
+    | '/agents'
     | '/app'
     | '/join'
     | '/api/public/agents/messages'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/docs'
+    | '/_authenticated/agents'
     | '/_authenticated/app'
     | '/_authenticated/join'
     | '/api/public/agents/messages'
@@ -157,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/agents': {
+      id: '/_authenticated/agents'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AuthenticatedAgentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/app': {
       id: '/_authenticated/app'
       path: '/app'
@@ -189,11 +208,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAgentsRoute: typeof AuthenticatedAgentsRoute
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
   AuthenticatedJoinRoute: typeof AuthenticatedJoinRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAgentsRoute: AuthenticatedAgentsRoute,
   AuthenticatedAppRoute: AuthenticatedAppRoute,
   AuthenticatedJoinRoute: AuthenticatedJoinRoute,
 }

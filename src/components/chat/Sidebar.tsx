@@ -191,12 +191,17 @@ export function AppSidebar(props: {
           <>
             <div className="flex items-center justify-between px-2 py-1.5">
               <span className="text-[11px] font-medium text-muted-foreground">Agent directory</span>
-              <button
-                onClick={props.onAddAgent}
-                className="text-[12px] font-medium text-primary hover:underline"
-              >
-                Register
-              </button>
+              <span className="flex items-center gap-3">
+                <Link to="/agents" className="text-[12px] font-medium text-muted-foreground hover:text-foreground hover:underline">
+                  Manage
+                </Link>
+                <button
+                  onClick={props.onAddAgent}
+                  className="text-[12px] font-medium text-primary hover:underline"
+                >
+                  Register
+                </button>
+              </span>
             </div>
             {props.agents.map((a) => (
               <button
