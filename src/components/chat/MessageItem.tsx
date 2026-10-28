@@ -8,7 +8,6 @@ import {
   Download,
   ListChecks,
   ChevronRight,
-  ShieldAlert,
   Info,
   Copy,
   Check,
@@ -18,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { AgentAvatar, AgentTag, HumanAvatar } from "./Avatars";
-import type { Agent, Approval, Message, Profile, Reaction, Task } from "@/hooks/use-chat-data";
+import type { Agent, Message, Profile, Reaction, Task } from "@/hooks/use-chat-data";
 
 const EMOJIS = ["👍", "✅", "👀", "🎉"];
 const time = (iso: string) =>
@@ -108,11 +107,9 @@ export function ChatMessage(props: {
   replyTarget?: { name: string; content: string } | undefined;
   reactions: Reaction[];
   myId: string;
-  approval?: Approval | undefined;
   highlight?: boolean;
   onReply: () => void;
   onReact: (emoji: string) => void;
-  onDecide: (id: string, d: "approved" | "rejected") => void;
   onOpenAttachment: (path: string) => void;
 }) {
   const { m, agent, isMe, grouped } = props;
@@ -190,38 +187,6 @@ export function ChatMessage(props: {
               </div>
               <Download className="h-4 w-4 shrink-0 text-muted-foreground" />
             </button>
-          )}
-          {m.kind === "approval" && props.approval && (
-            <div className="mt-2 rounded-lg border bg-background p-2.5">
-              <div className="flex items-center gap-1.5 text-xs font-medium text-warning">
-                <ShieldAlert className="h-3.5 w-3.5" />
-                Approval requested
-              </div>
-              {props.approval.status === "pending" ? (
-                <div className="mt-2 flex gap-2">
-                  <Button
-                    size="sm"
-                    className="h-7"
-                    onClick={() => props.onDecide(props.approval!.id, "approved")}
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7"
-                    onClick={() => props.onDecide(props.approval!.id, "rejected")}
-                  >
-                    Reject
-                  </Button>
-                </div>
-              ) : (
-                <div className="mt-1 text-xs text-muted-foreground">
-                  {props.approval.status === "approved" ? "Approved" : "Rejected"}
-                  {props.approval.decided_at ? ` · ${time(props.approval.decided_at)}` : ""}
-                </div>
-              )}
-            </div>
           )}
           {isMe && (
             <div className="mt-0.5 text-right text-[11px] text-subtle-foreground">

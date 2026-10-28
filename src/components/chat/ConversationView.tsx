@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { sendMessage, decideApproval, setPaused } from "@/lib/chat.functions";
+import { sendMessage, setPaused } from "@/lib/chat.functions";
 import { ChatMessage, SystemNotice, TaskEvent } from "./MessageItem";
 import { AgentAvatar, HumanAvatar } from "./Avatars";
 import { EmptyState } from "./EmptyState";
@@ -46,7 +46,6 @@ export function ConversationView(props: {
   const { conv, agents, profiles, myId } = props;
   const data = useConversationData(conv.id);
   const qc = useQueryClient();
-  const decide = useServerFn(decideApproval);
   const pause = useServerFn(setPaused);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
@@ -249,7 +248,7 @@ export function ConversationView(props: {
           />
         ) : (
           messages
-            .filter((m) => !q || m.content.toLowerCase().includes(q))
+            .filter((m) => m.kind !== "approval" && (!q || m.content.toLowerCase().includes(q)))
             .map((m, i, arr) => {
               const prev = arr[i - 1];
               const newDay =
@@ -302,18 +301,8 @@ export function ConversationView(props: {
                       replyTarget={m.reply_to ? replyInfo(m.reply_to) : undefined}
                       reactions={(data.reactions.data ?? []).filter((r) => r.message_id === m.id)}
                       myId={myId}
-                      approval={(data.approvals.data ?? []).find((a) => a.id === m.approval_id)}
                       onReply={() => setReplyTo(m.id)}
                       onReact={(e) => react(m.id, e)}
-                      onDecide={async (id, d) => {
-                        try {
-                          await decide({ data: { approvalId: id, decision: d } });
-                        } catch (e) {
-                          toast.error(
-                            e instanceof Error ? e.message : "Couldn't record your decision",
-                          );
-                        }
-                      }}
                       onOpenAttachment={openAttachment}
                     />
                   )}
