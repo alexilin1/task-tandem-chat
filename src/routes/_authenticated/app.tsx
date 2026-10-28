@@ -30,6 +30,8 @@ import { CommandMenu } from "@/components/chat/CommandMenu";
 import { EmptyState } from "@/components/chat/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { WelcomeDemo } from "@/components/onboarding/WelcomeDemo";
+import { useWelcomeDemo } from "@/hooks/use-welcome-demo";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/app")({
@@ -54,6 +56,7 @@ export const Route = createFileRoute("/_authenticated/app")({
 });
 
 function AppPage() {
+  const tour = useWelcomeDemo();
   const { user } = Route.useRouteContext();
   const { c } = Route.useSearch();
   const navigate = useNavigate({ from: "/app" });
@@ -205,6 +208,7 @@ function AppPage() {
         onOpenAgent={setProfileAgent}
         onSearch={() => setCmdOpen(true)}
         onSignOut={signOut}
+        onShowDemo={tour.show}
       />
       {activeConv ? (
         <>
@@ -247,6 +251,7 @@ function AppPage() {
         </div>
       )}
 
+      <WelcomeDemo key={tour.session} open={tour.open} onClose={tour.close} authenticated />
       <CommandMenu
         open={cmdOpen}
         onOpenChange={setCmdOpen}

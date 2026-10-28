@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  Play,
   Search,
   SquarePen,
   ChevronsUpDown,
@@ -80,6 +81,7 @@ export function AppSidebar(props: {
   onOpenAgent: (agent: Agent) => void;
   onSearch: () => void;
   onSignOut: () => void;
+  onShowDemo?: () => void;
   className?: string;
 }) {
   const [tab, setTab] = useState<Tab>("all");
@@ -119,6 +121,12 @@ export function AppSidebar(props: {
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
+            {props.onShowDemo && (
+              <DropdownMenuItem onSelect={props.onShowDemo}>
+                <Play className="h-4 w-4" />
+                Take the interactive tour
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onSelect={props.onInvite}>
               <Link2 className="h-4 w-4" />
               Invite people
@@ -192,7 +200,10 @@ export function AppSidebar(props: {
             <div className="flex items-center justify-between px-2 py-1.5">
               <span className="text-[11px] font-medium text-muted-foreground">Agent directory</span>
               <span className="flex items-center gap-3">
-                <Link to="/agents" className="text-[12px] font-medium text-muted-foreground hover:text-foreground hover:underline">
+                <Link
+                  to="/agents"
+                  className="text-[12px] font-medium text-muted-foreground hover:text-foreground hover:underline"
+                >
                   Manage
                 </Link>
                 <button

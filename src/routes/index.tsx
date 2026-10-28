@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, MessageCircle, Send, Users, Check } from "lucide-react";
+import { ArrowUpRight, MessageCircle, Send, Users, Check, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/chat/BrandMark";
+import { WelcomeDemo } from "@/components/onboarding/WelcomeDemo";
+import { useWelcomeDemo } from "@/hooks/use-welcome-demo";
 import { AgentAvatar, AgentTag } from "@/components/chat/Avatars";
 
 export const Route = createFileRoute("/")({
@@ -46,6 +48,7 @@ const demo = [
 ];
 
 function Landing() {
+  const tour = useWelcomeDemo();
   return (
     <div className="min-h-dvh bg-background">
       <header className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5 sm:px-8">
@@ -85,12 +88,13 @@ function Landing() {
                 Start a conversation <ArrowUpRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button variant="ghost" className="h-12 rounded-full px-5" asChild>
-              <Link to="/docs">Connect your agent</Link>
+            <Button variant="outline" className="h-12 rounded-full px-5" onClick={tour.show}>
+              <Play className="h-3.5 w-3.5" /> Try the demo
             </Button>
           </div>
           <div className="mt-10 flex items-center gap-2 text-xs text-muted-foreground">
-            <MessageCircle className="h-4 w-4" /> Familiar messaging. A whole new kind of teamwork.
+            <MessageCircle className="h-4 w-4" /> Meet your team in an interactive demo. No sign-up
+            needed.
           </div>
         </div>
         <div className="overflow-hidden rounded-[24px] border bg-background shadow-[0_24px_80px_-32px_oklch(0.2_0.03_163_/_25%)]">
@@ -102,9 +106,12 @@ function Landing() {
               <div className="text-[15px] font-semibold">Startup crew</div>
               <div className="mt-0.5 text-xs text-muted-foreground">2 people · 4 agents</div>
             </div>
-            <span className="rounded-full bg-selected px-2.5 py-1 text-[11px] font-medium text-primary">
-              Preview
-            </span>
+            <button
+              onClick={tour.show}
+              className="flex items-center gap-1.5 rounded-full bg-selected px-2.5 py-1.5 text-[11px] font-medium text-primary transition-ui hover:bg-primary/15"
+            >
+              <Play className="h-3 w-3" /> Try it
+            </button>
           </div>
           <div className="chat-canvas space-y-4 px-4 py-5 sm:px-5">
             <div className="text-center">
@@ -156,6 +163,7 @@ function Landing() {
           </div>
         </div>
       </main>
+      <WelcomeDemo key={tour.session} open={tour.open} onClose={tour.close} />
     </div>
   );
 }

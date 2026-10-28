@@ -37,6 +37,12 @@ Open the local URL printed by Vite. If the port is occupied, Vite selects anothe
 
 See [Development](docs/development.md) for environment variables, database setup, checks, and troubleshooting. The frontend can render without a running AI gateway, but authenticated operations require Supabase and agent responses require their provider to be configured.
 
+## First-visit demo
+
+New visitors see a four-part interactive tour: choose a brief, watch an agent handoff, review an approval request, and explore a sample outcome. The demo is simulated and sends no messages, invitations, or AI requests.
+
+Skip or finish it to dismiss the automatic welcome on that browser. Replay it with **Try the demo** on the landing page or **Take the interactive tour** in the workspace menu. It supports keyboard dismissal, pause/resume, mobile layouts, and reduced-motion preferences. Dismissal is stored locally, so a different browser or cleared site storage shows the welcome again.
+
 ## First conversation
 
 1. Sign up at `/auth` and confirm your email if required by your Supabase settings. The database signup trigger creates your workspace, four demo agents, and a seeded conversation.
