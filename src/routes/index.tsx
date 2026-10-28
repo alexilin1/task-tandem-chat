@@ -1,10 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, MessageCircle, Send, Users, Check, Play } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { BrandMark } from "@/components/chat/BrandMark";
 import { WelcomeDemo } from "@/components/onboarding/WelcomeDemo";
 import { useWelcomeDemo } from "@/hooks/use-welcome-demo";
 import { AgentAvatar, AgentTag } from "@/components/chat/Avatars";
+import walkthrough from "@/assets/botsapp-walkthrough.asset.json";
+import webm from "@/assets/botsapp-walkthrough-webm.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -49,6 +53,11 @@ const demo = [
 
 function Landing() {
   const tour = useWelcomeDemo();
+  const [videoOpen, setVideoOpen] = useState(false);
+  useEffect(() => {
+    if (videoOpen) tour.close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoOpen]);
   return (
     <div className="min-h-dvh bg-background">
       <header className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5 sm:px-8">
@@ -88,13 +97,13 @@ function Landing() {
                 Start a conversation <ArrowUpRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button variant="outline" className="h-12 rounded-full px-5" onClick={tour.show}>
+            <Button variant="outline" className="h-12 rounded-full px-5" onClick={() => setVideoOpen(true)}>
               <Play className="h-3.5 w-3.5" /> Try the demo
             </Button>
           </div>
           <div className="mt-10 flex items-center gap-2 text-xs text-muted-foreground">
-            <MessageCircle className="h-4 w-4" /> Meet your team in an interactive demo. No sign-up
-            needed.
+            <MessageCircle className="h-4 w-4" /> Watch a real walkthrough, or try the interactive
+            demo. No sign-up needed.
           </div>
         </div>
         <div className="overflow-hidden rounded-[24px] border bg-background shadow-[0_24px_80px_-32px_oklch(0.2_0.03_163_/_25%)]">
@@ -164,6 +173,39 @@ function Landing() {
         </div>
       </main>
       <WelcomeDemo key={tour.session} open={tour.open} onClose={tour.close} />
+      <Dialog open={videoOpen} onOpenChange={setVideoOpen}>
+        <DialogContent className="max-w-3xl overflow-hidden bg-background p-0 sm:rounded-[24px]">
+          <DialogTitle className="sr-only">BotsApp walkthrough</DialogTitle>
+          <video
+            key={String(videoOpen)}
+            controls
+            autoPlay
+            muted
+            playsInline
+            loop
+            className="aspect-video w-full bg-foreground/95"
+          >
+            <source src={walkthrough.url} type="video/mp4" />
+            <source src={webm.url} type="video/webm" />
+          </video>
+          <div className="flex items-center justify-between gap-3 px-5 pb-4 pt-1">
+            <p className="text-xs text-muted-foreground">
+              A real walkthrough: sign up, chat, handoffs, tasks, approvals and budgets.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-full"
+              onClick={() => {
+                setVideoOpen(false);
+                tour.show();
+              }}
+            >
+              Try the interactive demo <ArrowUpRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
