@@ -152,13 +152,13 @@ function BudgetRow({ wsId, agentId, label, budget, onSaved }: { wsId: string; ag
 
   async function save() {
     const l = Number(limit);
-    if (!limit || Number.isNaN(l) || l < 0) return toast.error("Enter a monthly limit in USD");
+    if (!limit || Number.isNaN(l) || l < 0) { toast.error("Enter a monthly limit in USD"); return; }
     const w = Math.min(100, Math.max(1, Number(warn) || 80));
     setBusy(true);
     const row = { workspace_id: wsId, agent_id: agentId, monthly_limit_usd: l, max_cost_per_run_usd: perRun ? Number(perRun) : null, warn_at_percent: w, hard_limit: hard, updated_at: new Date().toISOString() };
     const { error } = budget ? await supabase.from("agent_budgets").update(row).eq("id", budget.id) : await supabase.from("agent_budgets").insert(row);
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(`Budget saved for ${label}`);
     onSaved();
   }
