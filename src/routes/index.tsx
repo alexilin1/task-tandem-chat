@@ -168,6 +168,27 @@ function Landing() {
         </div>
       </main>
       <WelcomeDemo key={tour.session} open={tour.open} onClose={tour.close} />
+      <Dialog open={videoOpen} onOpenChange={setVideoOpen}>
+        <DialogContent className="max-w-3xl overflow-hidden bg-background p-0 sm:rounded-[24px]">
+          <DialogTitle className="sr-only">BotsApp walkthrough</DialogTitle>
+          <video
+            key={String(videoOpen)}
+            src={walkthrough.url}
+            controls
+            autoPlay
+            playsInline
+            className="aspect-video w-full bg-foreground/95"
+          />
+          <div className="flex items-center justify-between gap-3 px-5 pb-4 pt-1">
+            <p className="text-xs text-muted-foreground">
+              A real walkthrough: sign up, chat, handoffs, tasks, approvals and budgets.
+            </p>
+            <Button size="sm" variant="outline" className="rounded-full" onClick={tour.show} asChild>
+              <Link to="/auth">Try it live <ArrowUpRight className="h-3.5 w-3.5" /></Link>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
