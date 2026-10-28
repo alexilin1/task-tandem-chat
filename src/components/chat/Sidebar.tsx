@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, SquarePen, ChevronsUpDown, LogOut, Moon, Sun, BookOpen, UserPlus, Users, MessageSquare, Bot, Inbox } from "lucide-react";
+import { Search, SquarePen, ChevronsUpDown, LogOut, Moon, Sun, BookOpen, UserPlus, Users, MessageSquare, Bot, Inbox, Link2, Check } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -40,6 +40,7 @@ export function formatTime(iso: string) {
 
 export function AppSidebar(props: {
   workspaceName: string;
+  workspaces: { id: string; name: string }[];
   conversations: ConvItem[];
   agents: Agent[];
   profiles: Profile[];
@@ -49,6 +50,8 @@ export function AppSidebar(props: {
   unread: Map<string, number>;
   activeId?: string | undefined;
   onSelect: (id: string) => void;
+  onSwitchWorkspace: (id: string) => void;
+  onInvite: () => void;
   onCreateGroup: () => void;
   onAddAgent: () => void;
   onOpenAgent: (agent: Agent) => void;
@@ -73,9 +76,15 @@ export function AppSidebar(props: {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Workspace</DropdownMenuLabel>
-            <DropdownMenuItem>{props.workspaceName}</DropdownMenuItem>
+            <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Workspaces</DropdownMenuLabel>
+            {props.workspaces.map((w) => (
+              <DropdownMenuItem key={w.id} onSelect={() => props.onSwitchWorkspace(w.id)} className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate">{w.name}</span>
+                {w.name === props.workspaceName && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+              </DropdownMenuItem>
+            ))}
             <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={props.onInvite}><Link2 className="h-4 w-4" />Invite people</DropdownMenuItem>
             <DropdownMenuItem onSelect={props.onAddAgent}><UserPlus className="h-4 w-4" />Register agent</DropdownMenuItem>
             <DropdownMenuItem asChild><Link to="/docs"><BookOpen className="h-4 w-4" />Agent API docs</Link></DropdownMenuItem>
           </DropdownMenuContent>

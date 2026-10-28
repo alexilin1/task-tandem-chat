@@ -4,12 +4,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getLastRead, useAgents, useConversations, useProfiles, useRecentMessages, useWorkspace, type Agent, type Conversation } from "@/hooks/use-chat-data";
+import { getLastRead, getActiveWorkspaceId, setActiveWorkspaceId, useAgents, useConversations, useProfiles, useRecentMessages, useWorkspaces, type Agent, type Conversation } from "@/hooks/use-chat-data";
 import { useTheme } from "@/hooks/use-theme";
 import { AppSidebar, type Preview } from "@/components/chat/Sidebar";
 import { ConversationView } from "@/components/chat/ConversationView";
 import { RightPanel } from "@/components/chat/RightPanel";
-import { AddAgentDialog, AgentProfileDialog, CreateGroupDialog } from "@/components/chat/Dialogs";
+import { AddAgentDialog, AgentProfileDialog, CreateGroupDialog, InviteDialog } from "@/components/chat/Dialogs";
 import { CommandMenu } from "@/components/chat/CommandMenu";
 import { EmptyState } from "@/components/chat/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,17 +35,29 @@ function AppPage() {
   const navigate = useNavigate({ from: "/app" });
   const qc = useQueryClient();
   const theme = useTheme();
-  const ws = useWorkspace();
-  const convs = useConversations(ws.data?.id);
-  const agents = useAgents(ws.data?.id);
+  const workspaces = useWorkspaces();
+  const [activeWsId, setActiveWsId] = useState<string | null>(() => getActiveWorkspaceId());
+  const wsList = workspaces.data ?? [];
+  const wsData = wsList.find((w) => w.id === activeWsId) ?? wsList[0];
+  const convs = useConversations(wsData?.id);
+  const agents = useAgents(wsData?.id);
   const profiles = useProfiles();
   const list = convs.data ?? [];
   const recent = useRecentMessages(list.map((x) => x.id));
   const [details, setDetails] = useState(false);
   const [groupOpen, setGroupOpen] = useState(false);
   const [agentOpen, setAgentOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [profileAgent, setProfileAgent] = useState<Agent | null>(null);
+
+  function switchWorkspace(id: string) {
+    if (id === wsData?.id) return;
+    setActiveWorkspaceId(id);
+    setActiveWorkspaceId(id);
+    setDetails(false);
+    navigate({ search: {}, replace: true });
+  }
 
   const active = list.find((x) => x.id === c);
   const activeConv = active as unknown as Conversation | undefined;
@@ -86,7 +98,7 @@ function AppPage() {
     setProfileAgent(null);
     const existing = list.find((x) => x.kind === "dm" && x.conversation_participants.some((p) => p.agent_id === agent.id));
     if (existing) return navigate({ search: { c: existing.id } });
-    const { data, error } = await supabase.from("conversations").insert({ workspace_id: ws.data!.id, title: agent.name, kind: "dm", created_by: user.id }).select().single();
+    const { data, error } = await supabase.from("conversations").insert({ workspace_id: wsData!.id, title: agent.name, kind: "dm", created_by: user.id }).select().single();
     if (error || !data) return toast.error("Couldn't start the conversation");
     await supabase.from("conversation_participants").insert([{ conversation_id: data.id, user_id: user.id }, { conversation_id: data.id, agent_id: agent.id }]);
     await qc.invalidateQueries({ queryKey: ["conversations"] });
@@ -100,15 +112,15 @@ function AppPage() {
     navigate({ to: "/auth", replace: true });
   }
 
-  if (ws.isLoading || convs.isLoading) return <AppSkeleton />;
-  if (ws.isError || convs.isError) {
+  if (workspaces.isLoading || convs.isLoading) return <AppSkeleton />;
+  if (workspaces.isError || convs.isError) {
     return (
       <div className="grid h-dvh place-items-center">
         <EmptyState icon={MessageSquare} title="Couldn't load your workspace" description="Check your connection and try again." action={<Button size="sm" variant="outline" onClick={() => location.reload()}>Reload</Button>} />
       </div>
     );
   }
-  if (!ws.data) return <div className="grid h-dvh place-items-center text-sm text-muted-foreground">No workspace found for your account.</div>;
+  if (!wsData) return <div className="grid h-dvh place-items-center text-sm text-muted-foreground">No workspace found for your account.</div>;
 
   const agentList = agents.data ?? [];
   const profileList = profiles.data ?? [];
@@ -117,7 +129,8 @@ function AppPage() {
     <div className="flex h-dvh overflow-hidden bg-background text-foreground">
       <AppSidebar
         className={cn("w-full md:w-[280px] md:shrink-0", c ? "hidden md:flex" : "flex")}
-        workspaceName={ws.data.name}
+        workspaceName={wsData.name}
+        workspaces={wsList.map((w) => ({ id: w.id, name: w.name }))}
         conversations={list}
         agents={agentList}
         profiles={profileList}
@@ -127,6 +140,8 @@ function AppPage() {
         unread={unread}
         activeId={c}
         onSelect={(id) => navigate({ search: { c: id } })}
+        onSwitchWorkspace={switchWorkspace}
+        onInvite={() => setInviteOpen(true)}
         onCreateGroup={() => setGroupOpen(true)}
         onAddAgent={() => setAgentOpen(true)}
         onOpenAgent={setProfileAgent}
@@ -179,8 +194,9 @@ function AppPage() {
         onDocs={() => navigate({ to: "/docs" })}
       />
       <AgentProfileDialog agent={profileAgent} onOpenChange={(o) => !o && setProfileAgent(null)} onMessage={openDM} />
-      <CreateGroupDialog open={groupOpen} onOpenChange={setGroupOpen} workspaceId={ws.data.id} myId={user.id} agents={agentList} onCreated={async (id) => { await qc.invalidateQueries({ queryKey: ["conversations"] }); navigate({ search: { c: id } }); }} />
-      <AddAgentDialog open={agentOpen} onOpenChange={(o) => { setAgentOpen(o); if (!o) qc.invalidateQueries({ queryKey: ["agents"] }); }} workspaceId={ws.data.id} />
+      <CreateGroupDialog open={groupOpen} onOpenChange={setGroupOpen} workspaceId={wsData.id} myId={user.id} agents={agentList} onCreated={async (id) => { await qc.invalidateQueries({ queryKey: ["conversations"] }); navigate({ search: { c: id } }); }} />
+      <AddAgentDialog open={agentOpen} onOpenChange={(o) => { setAgentOpen(o); if (!o) qc.invalidateQueries({ queryKey: ["agents"] }); }} workspaceId={wsData.id} />
+      <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} workspaceId={wsData.id} workspaceName={wsData.name} />
     </div>
   );
 }

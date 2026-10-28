@@ -61,3 +61,12 @@ export function checkRunAllowed(input: {
 export function canDecideApproval(actor: { kind: "user" | "agent"; isMember: boolean }): boolean {
   return actor.kind === "user" && actor.isMember;
 }
+
+export type InviteCheck = { ok: true } | { ok: false; reason: string };
+
+/** An invite can be used only before it expires and while it has uses left. */
+export function checkInviteUsable(invite: { expires_at: string; uses: number; max_uses: number }, now: Date = new Date()): InviteCheck {
+  if (new Date(invite.expires_at).getTime() <= now.getTime()) return { ok: false, reason: "This invite link has expired" };
+  if (invite.uses >= invite.max_uses) return { ok: false, reason: "This invite link has reached its use limit" };
+  return { ok: true };
+}
