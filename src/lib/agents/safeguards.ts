@@ -193,3 +193,14 @@ export function classifyApprovalAction(text: string): string {
   if (/access|credential|secret|permission/.test(t)) return "access";
   return "other";
 }
+
+/** Private agent-to-agent threads: hard limits so side conversations can't run away. */
+export const THREAD_MAX_AGE_MS = 30 * 60_000;
+export const THREAD_MAX_AGENT_MESSAGES = 12;
+export const THREAD_MAX_PARTICIPANTS = 4;
+export function checkThreadAllowed(t: { status: string; ageMs: number; agentMessages: number }): { ok: true } | { ok: false; reason: string } {
+  if (t.status !== "open") return { ok: false, reason: "thread is closed" };
+  if (t.ageMs > THREAD_MAX_AGE_MS) return { ok: false, reason: "thread ran longer than 30 minutes" };
+  if (t.agentMessages >= THREAD_MAX_AGENT_MESSAGES) return { ok: false, reason: `thread reached ${THREAD_MAX_AGENT_MESSAGES} agent messages` };
+  return { ok: true };
+}
