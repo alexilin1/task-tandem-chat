@@ -19,4 +19,4 @@
 - [ ] Agent execution status beside names (working / waiting / failed)
 - [ ] Roles & permissions (owner/admin/member) for approvals and budgets
 - [ ] Budget warning notifications; per-task budgets
-- [ ] Add people (workspace members) when creating a group
+- [x] Add people (workspace members) when creating a group
