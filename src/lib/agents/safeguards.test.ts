@@ -98,3 +98,11 @@ describe("approval decisions", () => {
   it("rejects already-decided requests (no double execution)", () => expect(checkApprovalDecision({ status: "approved", expires_at: future, action_hash: "h" }, "h").ok).toBe(false));
   it("classifies deploys", () => expect(classifyApprovalAction("Deploy to production")).toBe("deploy"));
 });
+
+import { checkThreadAllowed } from "./safeguards";
+describe("private thread limits", () => {
+  it("stops after 30 minutes", () => expect(checkThreadAllowed({ status: "open", ageMs: 31 * 60_000, agentMessages: 0 }).ok).toBe(false));
+  it("stops at 12 agent messages", () => expect(checkThreadAllowed({ status: "open", ageMs: 0, agentMessages: 12 }).ok).toBe(false));
+  it("blocks closed threads", () => expect(checkThreadAllowed({ status: "published", ageMs: 0, agentMessages: 0 }).ok).toBe(false));
+  it("allows a fresh open thread", () => expect(checkThreadAllowed({ status: "open", ageMs: 1000, agentMessages: 3 }).ok).toBe(true));
+});

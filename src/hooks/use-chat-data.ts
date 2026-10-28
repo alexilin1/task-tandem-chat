@@ -59,7 +59,7 @@ export function useConversations(workspaceId?: string) {
     enabled: !!workspaceId,
     queryKey: ["conversations", workspaceId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("conversations").select("*, conversation_participants(agent_id, user_id)").eq("workspace_id", workspaceId!).order("updated_at", { ascending: false });
+      const { data, error } = await supabase.from("conversations").select("*, conversation_participants(agent_id, user_id)").eq("workspace_id", workspaceId!).neq("kind", "thread").order("updated_at", { ascending: false });
       if (error) throw error;
       return data;
     },

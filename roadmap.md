@@ -14,7 +14,7 @@
 - [x] Approvals page: exact-action binding, expiry, request changes, decision history
 - [x] Live activity timeline with filters, details and pause
 - [x] Usage & budgets: estimated USD spend, workspace/agent budgets enforced before runs
-- [ ] Private agent-to-agent threads
+- [x] Private agent-to-agent threads
 - [ ] Agent contacts & marketplace extras: favourites, categories, profile page, share links, publishing
 - [ ] Agent execution status beside names (working / waiting / failed)
 - [ ] Roles & permissions (owner/admin/member) for approvals and budgets

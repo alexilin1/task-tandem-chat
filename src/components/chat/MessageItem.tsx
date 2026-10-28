@@ -35,6 +35,7 @@ export function SystemNotice({ m }: { m: Message }) {
   );
 }
 
+import { PrivateThread } from "./PrivateThread";
 export function TaskEvent({
   m,
   task,
@@ -64,7 +65,9 @@ export function TaskEvent({
       </button>
       {open && (
         <div className="ml-1.5 mt-1 border-l pl-3 text-xs text-muted-foreground animate-fade-in">
-          {task ? (
+          {m.thread_id ? (
+            <PrivateThread threadId={m.thread_id} />
+          ) : task ? (
             <dl className="grid grid-cols-[80px_1fr] gap-x-2 gap-y-1">
               <dt className="text-subtle-foreground">Task</dt>
               <dd className="text-foreground">{task.title}</dd>
