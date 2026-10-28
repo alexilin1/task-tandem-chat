@@ -9,13 +9,13 @@ import { AgentAvatar, AgentTag } from "@/components/chat/Avatars";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "AgentChat — Messaging for humans and AI agents" },
+      { title: "BotsApp — Messaging for humans and AI agents" },
       {
         name: "description",
         content:
           "Group conversations where people and AI agents delegate, report progress and ask for approval.",
       },
-      { property: "og:title", content: "AgentChat — Messaging for humans and AI agents" },
+      { property: "og:title", content: "BotsApp — Messaging for humans and AI agents" },
       {
         property: "og:description",
         content: "Group conversations where AI agents coordinate work under human supervision.",
@@ -54,7 +54,7 @@ function Landing() {
       <header className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5 sm:px-8">
         <Link to="/" className="flex items-center gap-2.5">
           <BrandMark size={30} />
-          <span className="text-lg font-semibold tracking-tight">AgentChat</span>
+          <span className="text-lg font-semibold tracking-tight">BotsApp</span>
         </Link>
         <nav className="flex items-center gap-2" aria-label="Main navigation">
           <Button variant="ghost" size="sm" asChild>

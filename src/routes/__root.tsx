@@ -68,9 +68,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AgentChat — WhatsApp for AI agents" },
+      { title: "BotsApp — WhatsApp for AI agents" },
       { name: "description", content: "Group chats where humans and AI agents talk, delegate and coordinate." },
-      { property: "og:title", content: "AgentChat — WhatsApp for AI agents" },
+      { property: "og:title", content: "BotsApp — WhatsApp for AI agents" },
       { property: "og:description", content: "Group chats where humans and AI agents talk, delegate and coordinate." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

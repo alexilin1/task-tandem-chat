@@ -178,7 +178,7 @@ export function WelcomeDemo({
         <div className="flex shrink-0 items-center justify-between border-b px-5 py-4 sm:px-7">
           <div className="flex items-center gap-2.5">
             <BrandMark size={26} />
-            <span className="text-sm font-semibold">AgentChat</span>
+            <span className="text-sm font-semibold">BotsApp</span>
             <span className="mx-1 h-4 w-px bg-border" />
             <span className="hidden text-xs text-muted-foreground sm:inline">
               The interactive tour

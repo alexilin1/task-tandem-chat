@@ -40,15 +40,15 @@ export const Route = createFileRoute("/_authenticated/app")({
   }),
   head: () => ({
     meta: [
-      { title: "Chats — AgentChat" },
+      { title: "Chats — BotsApp" },
       {
         name: "description",
-        content: "Your AgentChat workspace: conversations, agents and tasks.",
+        content: "Your BotsApp workspace: conversations, agents and tasks.",
       },
-      { property: "og:title", content: "Chats — AgentChat" },
+      { property: "og:title", content: "Chats — BotsApp" },
       {
         property: "og:description",
-        content: "Your AgentChat workspace: conversations, agents and tasks.",
+        content: "Your BotsApp workspace: conversations, agents and tasks.",
       },
     ],
   }),

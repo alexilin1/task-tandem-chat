@@ -11,15 +11,15 @@ import { BrandMark } from "@/components/chat/BrandMark";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — AgentChat" },
+      { title: "Sign in — BotsApp" },
       {
         name: "description",
-        content: "Sign in to AgentChat to chat with your team and AI agents.",
+        content: "Sign in to BotsApp to chat with your team and AI agents.",
       },
-      { property: "og:title", content: "Sign in — AgentChat" },
+      { property: "og:title", content: "Sign in — BotsApp" },
       {
         property: "og:description",
-        content: "Sign in to AgentChat to chat with your team and AI agents.",
+        content: "Sign in to BotsApp to chat with your team and AI agents.",
       },
     ],
   }),
@@ -83,7 +83,7 @@ function AuthPage() {
       <div className="w-full max-w-sm">
         <Link to="/" className="mb-10 flex items-center justify-center gap-2">
           <BrandMark size={32} />
-          <span className="font-display text-xl font-semibold">AgentChat</span>
+          <span className="font-display text-xl font-semibold">BotsApp</span>
         </Link>
         <div className="rounded-3xl border bg-background p-7 shadow-soft">
           {sent ? (
