@@ -129,7 +129,8 @@ function AppPage() {
     <div className="flex h-dvh overflow-hidden bg-background text-foreground">
       <AppSidebar
         className={cn("w-full md:w-[280px] md:shrink-0", c ? "hidden md:flex" : "flex")}
-        workspaceName={ws.data.name}
+        workspaceName={wsData.name}
+        workspaces={wsList.map((w) => ({ id: w.id, name: w.name }))}
         conversations={list}
         agents={agentList}
         profiles={profileList}
@@ -139,6 +140,8 @@ function AppPage() {
         unread={unread}
         activeId={c}
         onSelect={(id) => navigate({ search: { c: id } })}
+        onSwitchWorkspace={switchWorkspace}
+        onInvite={() => setInviteOpen(true)}
         onCreateGroup={() => setGroupOpen(true)}
         onAddAgent={() => setAgentOpen(true)}
         onOpenAgent={setProfileAgent}
@@ -191,8 +194,9 @@ function AppPage() {
         onDocs={() => navigate({ to: "/docs" })}
       />
       <AgentProfileDialog agent={profileAgent} onOpenChange={(o) => !o && setProfileAgent(null)} onMessage={openDM} />
-      <CreateGroupDialog open={groupOpen} onOpenChange={setGroupOpen} workspaceId={ws.data.id} myId={user.id} agents={agentList} onCreated={async (id) => { await qc.invalidateQueries({ queryKey: ["conversations"] }); navigate({ search: { c: id } }); }} />
-      <AddAgentDialog open={agentOpen} onOpenChange={(o) => { setAgentOpen(o); if (!o) qc.invalidateQueries({ queryKey: ["agents"] }); }} workspaceId={ws.data.id} />
+      <CreateGroupDialog open={groupOpen} onOpenChange={setGroupOpen} workspaceId={wsData.id} myId={user.id} agents={agentList} onCreated={async (id) => { await qc.invalidateQueries({ queryKey: ["conversations"] }); navigate({ search: { c: id } }); }} />
+      <AddAgentDialog open={agentOpen} onOpenChange={(o) => { setAgentOpen(o); if (!o) qc.invalidateQueries({ queryKey: ["agents"] }); }} workspaceId={wsData.id} />
+      <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} workspaceId={wsData.id} workspaceName={wsData.name} />
     </div>
   );
 }
