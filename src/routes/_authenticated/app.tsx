@@ -9,7 +9,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { AppSidebar, type Preview } from "@/components/chat/Sidebar";
 import { ConversationView } from "@/components/chat/ConversationView";
 import { RightPanel } from "@/components/chat/RightPanel";
-import { AddAgentDialog, AgentProfileDialog, CreateGroupDialog } from "@/components/chat/Dialogs";
+import { AddAgentDialog, AgentProfileDialog, CreateGroupDialog, InviteDialog } from "@/components/chat/Dialogs";
 import { CommandMenu } from "@/components/chat/CommandMenu";
 import { EmptyState } from "@/components/chat/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,17 +35,29 @@ function AppPage() {
   const navigate = useNavigate({ from: "/app" });
   const qc = useQueryClient();
   const theme = useTheme();
-  const ws = useWorkspace();
-  const convs = useConversations(ws.data?.id);
-  const agents = useAgents(ws.data?.id);
+  const workspaces = useWorkspaces();
+  const [activeWsId, setActiveWsId] = useState<string | null>(() => getActiveWorkspaceId());
+  const wsList = workspaces.data ?? [];
+  const wsData = wsList.find((w) => w.id === activeWsId) ?? wsList[0];
+  const convs = useConversations(wsData?.id);
+  const agents = useAgents(wsData?.id);
   const profiles = useProfiles();
   const list = convs.data ?? [];
   const recent = useRecentMessages(list.map((x) => x.id));
   const [details, setDetails] = useState(false);
   const [groupOpen, setGroupOpen] = useState(false);
   const [agentOpen, setAgentOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [profileAgent, setProfileAgent] = useState<Agent | null>(null);
+
+  function switchWorkspace(id: string) {
+    if (id === wsData?.id) return;
+    setActiveWorkspaceId(id);
+    setActiveWorkspaceId(id);
+    setDetails(false);
+    navigate({ search: {}, replace: true });
+  }
 
   const active = list.find((x) => x.id === c);
   const activeConv = active as unknown as Conversation | undefined;
